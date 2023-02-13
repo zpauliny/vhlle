@@ -420,10 +420,24 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
      f->getCell(ix, iy + 1, iz)->getMaxM() <= 0.9 ||
      f->getCell(ix - 1, iy, iz)->getMaxM() <= 0.9 ||
      f->getCell(ix, iy - 1, iz)->getMaxM() <= 0.9 ||
+     f->getCell(ix, iy, iz + 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix, iy, iz - 1)->getMaxM() <= 0.9 ||
+
      f->getCell(ix + 1, iy + 1, iz)->getMaxM() <= 0.9 ||
      f->getCell(ix + 1, iy - 1, iz)->getMaxM() <= 0.9 ||
      f->getCell(ix - 1, iy + 1, iz)->getMaxM() <= 0.9 ||
-     f->getCell(ix - 1, iy - 1, iz)->getMaxM() <= 0.9) {
+     f->getCell(ix - 1, iy - 1, iz)->getMaxM() <= 0.9 ||
+     
+     f->getCell(ix + 1, iy, iz + 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix + 1, iy, iz - 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix - 1, iy, iz + 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix - 1, iy, iz - 1)->getMaxM() <= 0.9 ||
+     
+     f->getCell(ix, iy + 1, iz + 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix, iy + 1, iz - 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix, iy - 1, iz + 1)->getMaxM() <= 0.9 ||
+     f->getCell(ix, iy - 1, iz - 1)->getMaxM() <= 0.9) {
+  
   for (int i = 0; i < 4; i++)
    for (int j = 0; j < 4; j++) {
     pi[i][j] = 0.;

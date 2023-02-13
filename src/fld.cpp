@@ -361,9 +361,21 @@ void Fluid::updateM(double tau, double dt) {
       if (getCell(ix + 1, iy + 1, iz)->getMaxM() >= 1. ||
           getCell(ix + 1, iy - 1, iz)->getMaxM() >= 1. ||
           getCell(ix - 1, iy + 1, iz)->getMaxM() >= 1. ||
-          getCell(ix - 1, iy - 1, iz)->getMaxM() >= 1.) {
+          getCell(ix - 1, iy - 1, iz)->getMaxM() >= 1. ||
+          
+          getCell(ix, iy + 1, iz + 1)->getMaxM() >= 1. ||
+          getCell(ix, iy + 1, iz - 1)->getMaxM() >= 1. ||
+          getCell(ix, iy - 1, iz + 1)->getMaxM() >= 1. ||
+          getCell(ix, iy - 1, iz - 1)->getMaxM() >= 1. ||
+          
+          getCell(ix + 1, iy, iz + 1)->getMaxM() >= 1. ||
+          getCell(ix + 1, iy, iz - 1)->getMaxM() >= 1. ||
+          getCell(ix - 1, iy, iz + 1)->getMaxM() >= 1. ||
+          getCell(ix - 1, iy, iz - 1)->getMaxM() >= 1.) {
+      
        c->setDM(X_, 0.707 * dt / dx);
        c->setDM(Y_, 0.707 * dt / dy);
+       c->setDM(Z_, 0.707 * dt / dz / tau);
       }
      }
     }  // if
