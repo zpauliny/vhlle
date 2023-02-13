@@ -31,6 +31,7 @@
 #include "icGubser.h"
 #include "icGlissando.h"
 #include "icTrento.h"
+#include "icTest.h"
 #include "eos.h"
 #include "eo3.h"
 #include "eo1.h"
@@ -323,6 +324,10 @@ int main(int argc, char **argv) {
  } else if(icModel==7){ // IC from Trento
    IcTrento *ic = new IcTrento(f, isInputFile.c_str(), tau0, collSystem.c_str());
    ic->setIC(f, eos);
+   delete ic;
+ } else if(icModel==8){ // IC for testing purposes
+   ICTest *ic = new ICTest();
+   ic->setIC(f, eos, 1);
    delete ic;
  } else {
   cout << "icModel = " << icModel << " not implemented\n";
