@@ -11,6 +11,7 @@
 #include "rmn.h"
 #include "fld.h"
 #include "icPartSMASH.h"
+#include "particle.h"
 
 using namespace std;
 
@@ -195,6 +196,103 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  std::cout << "particle E = " << E_smash/ nevents << "  Nbar = " << B_smash / nevents 
       << "  Ncharge = " << Q_smash / nevents << " Ns = " << S_smash / nevents << std::endl;
 }
+
+// dynamical IC: set up queue of particles
+// works only #ifdef CARTESIAN
+IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
+                         queue<Particle>* particles) {
+ nx = f->getNX();
+ ny = f->getNY();
+ nz = f->getNZ();
+ 
+ dx = f->getDx();
+ dy = f->getDy();
+ dz = f->getDz();
+
+ Rgz = _Rgz;
+
+ // initialize the grid of conserved quantities
+ T00 = new double**[nx];
+ T0x = new double**[nx];
+ T0y = new double**[nx];
+ T0z = new double**[nx];
+ QB = new double**[nx];
+ QE = new double**[nx];
+ for (int ix = 0; ix < nx; ix++) {
+  T00[ix] = new double*[ny];
+  T0x[ix] = new double*[ny];
+  T0y[ix] = new double*[ny];
+  T0z[ix] = new double*[ny];
+  QB[ix] = new double*[ny];
+  QE[ix] = new double*[ny];
+  for (int iy = 0; iy < ny; iy++) {
+   T00[ix][iy] = new double[nz];
+   T0x[ix][iy] = new double[nz];
+   T0y[ix][iy] = new double[nz];
+   T0z[ix][iy] = new double[nz];
+   QB[ix][iy] = new double[nz];
+   QE[ix][iy] = new double[nz];
+   for (int iz = 0; iz < nz; iz++) {
+    T00[ix][iy][iz] = 0.0;
+    T0x[ix][iy][iz] = 0.0;
+    T0y[ix][iy][iz] = 0.0;
+    T0z[ix][iy][iz] = 0.0;
+    QB[ix][iy][iz] = 0.0;
+    QE[ix][iy][iz] = 0.0;
+   }
+  }
+ }
+
+ cout << "I am in the class \n";                          
+ // ---- read the events
+ nevents = 0;
+ ifstream fin(filename);
+ if (!fin.good()) {
+  cout << "I/O error with " << filename << endl;
+  exit(1);
+ }
+ int np = 0;  // particle counter
+ string line;
+ istringstream instream;
+ while (!fin.eof()) {
+  getline(fin, line);
+  instream.str(line);
+  instream.seekg(0);
+  instream.clear();
+  if (line[0] == '#') continue;
+  // Read line
+  if (!instream.fail()) {
+  instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
+              Py_val >> Pz_val >> Id_val >> Charge_val;
+  int Baryon_val = 0;
+  for (auto &code : PDG_Codes_Baryons) {
+        if (Id_val == code) {
+          // PDG code > 0: baryon, else anti baryon
+          (code > 0) ? Baryon_val = 1 : Baryon_val = -1;
+        }
+  }
+  Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val, 
+      Y_val, Z_val, E_val, Px_val, Py_val, Pz_val);
+  particles->push(particleIn);
+  
+  
+   np++;
+  }
+  else if (np > 0) {
+   // cout<<"readF14:instream: failure reading data\n" ;
+   // cout<<"stream = "<<instream.str()<<endl ;
+   if (nevents % 100 == 0) {
+    cout << "event = " << nevents << "  np = " << np << "\r";
+    cout << flush;
+   }
+   np = 0;
+   nevents++;
+   // if(nevents>10000) return ;
+  }
+ }
+ if (nevents > 1)
+  cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+ }
 
 IcPartSMASH::~IcPartSMASH() {
  for (int ix = 0; ix < nx; ix++) {
@@ -391,4 +489,66 @@ double smoothingKernelInvariant(spatialVector _r, velocityVector _v, double _R,
       _r.zdiff *  _v.vz * _tau * _tau;
     
     return exp( (-rSquared - ruScalar * ruScalar) / _R / _R);
+
+// dynamical IC: set up IC with 1st particles, others stay in queue
+// works only #ifdef CARTESIAN
+void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles) {
+ double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
+ double Q[7], e, p, nb, nq, ns, vx, vy, vz;
+ double weight;
+
+ double t0 = particles->front().getT();
+ double t = t0;
+ 
+ // pick particles that left SMASH the earliest
+ while (t <= t0) {
+  Particle particleToSmooth = particles->front();
+  int ixc = particleToSmooth.getIxc();
+  int smoothx = particleToSmooth.getNsmoothX();
+  int iyc = particleToSmooth.getIyc();
+  int smoothy = particleToSmooth.getNsmoothY();
+  int izc = particleToSmooth.getIzc();
+  int smoothz = particleToSmooth.getNsmoothZ();
+    
+  for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
+   for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
+    for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+     if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+      
+      weight = particleToSmooth.getWeight(ix, iy, iz, f, Rgz);
+      
+      T00[ix][iy][iz] += particleToSmooth.getE() * weight;
+      T0x[ix][iy][iz] += particleToSmooth.getPx() * weight;
+      T0y[ix][iy][iz] += particleToSmooth.getPy() * weight;
+      T0z[ix][iy][iz] += particleToSmooth.getPz() * weight;
+      QB[ix][iy][iz] += particleToSmooth.getB() * weight;
+      QE[ix][iy][iz] += particleToSmooth.getQ() * weight;
+ }
+ 
+ particles->pop();
+ t = particles->front().getT(); 
+} // all particles for IC should be in now
+
+// initialize cell values
+ for (int ix = 0; ix < nx; ix++)
+  for (int iy = 0; iy < ny; iy++)
+   for (int iz = 0; iz < nz; iz++) {
+    Q[T_] = T00[ix][iy][iz] / dx / dy / dz;
+    Q[X_] = T0x[ix][iy][iz] / dx / dy / dz;
+    Q[Y_] = T0y[ix][iy][iz] / dx / dy / dz;
+    Q[Z_] = T0z[ix][iy][iz] / dx / dy / dz;
+    Q[NB_] = QB[ix][iy][iz] / dx / dy / dz;
+    Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
+    Q[NS_] = 0.0;
+    transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
+    if (e < 1e-7 || fabs(f->getX(ix)) > 10. || fabs(f->getY(iy)) > 10. ||
+        fabs(f->getZ(iz)) > 5.) {
+     e = nb = nq = 0.0;
+     vx = vy = vz = 0.0;
+    }
+    Cell* c = f->getCell(ix, iy, iz);
+    c->setPrimVar(eos, tau0, e, nb, nq, ns, vx, vy, vz);
+    if (e > 0.) c->setAllM(1.);
+ }
+ // fluid initialized + particles queue awaits
 }

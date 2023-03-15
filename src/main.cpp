@@ -21,6 +21,7 @@
 #include <cstring>
 #include <ctime>
 #include <sstream>
+#include <queue>
 #include "fld.h"
 #include "hdo.h"
 #include "ic.h"
@@ -41,7 +42,7 @@
 #include "eoSmash.h"
 #include "trancoeff.h"
 #include "vtk.h"
-
+#include "particle.h"
 
 using namespace std;
 
@@ -271,8 +272,8 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
+ queue<Particle>* particles = new queue<Particle>();
  time_t start = 0, end;
-
  time(&start);
 
  // read parameters from file
@@ -345,6 +346,10 @@ int main(int argc, char **argv) {
    IcTrento3d *ic = new IcTrento3d(f, isInputFile.c_str(), tau0, collSystem.c_str());
    ic->setIC(f, eos);
    delete ic;
+ } else if(icModel==9) { // SMASH dynamical IC
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, particles);
+   ic->setIC(f,eos,particles);
+   delete ic;
  } else {
   cout << "icModel = " << icModel << " not implemented\n";
  }
@@ -363,7 +368,6 @@ int main(int argc, char **argv) {
  start = 0;
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
-
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
  f->outputCorona(tau0);
 
@@ -385,13 +389,16 @@ int main(int argc, char **argv) {
   }
   if(nSubSteps>1) {
    h->setDtau(h->getDtau() / nSubSteps);
-   for (int j = 0; j < nSubSteps; j++)
+   for (int j = 0; j < nSubSteps; j++){
     h->performStep();
+    h->addParticles(particles);
+   }
    h->setDtau(h->getDtau() * nSubSteps);
    cout << "timestep reduced by " << nSubSteps << endl;
   } else
    h->performStep();
-  f->outputSurface(h->getTau());
+   h->addParticles(particles);
+   f->outputSurface(h->getTau());
   if (!freezeoutOnly)
    f->outputGnuplot(h->getTau());
   if(h->getTau()>=tauResize and resized==false) {
@@ -410,4 +417,5 @@ int main(int argc, char **argv) {
  delete h;
  delete eos;
  delete eosH;
+ delete particles;
 }

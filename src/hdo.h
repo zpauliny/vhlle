@@ -1,8 +1,10 @@
+#include <queue>
 
 class Cell;
 class Fluid;
 class EoS;
 class TransportCoeff;
+class Particle;
 
 // this class implements the hydrodynamic evolution and
 // contains the hydrodynamic algorithm
@@ -51,4 +53,6 @@ public:
  void performStep(void);
  // gets the current proper time
  inline double getTau() const { return tau; }
+ // adds sources from incoming particles into the hydro
+ void addParticles(std::queue<Particle>* particles);
 };

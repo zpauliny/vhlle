@@ -27,6 +27,7 @@
 #include "eos.h"
 #include "trancoeff.h"
 #include "cornelius.h"
+#include "particle.h"
 
 #define OUTPI
 
@@ -607,7 +608,7 @@ void Fluid::outputSurface(double tau) {
      transformPV(eos, QC, eC, pC, nbC, nqC, _ns, vxC, vyC, vzC);
      eos->eos(eC, nbC, nqC, _ns, TC, mubC, muqC, musC, pC);
      if (TC > 0.4 || fabs(mubC) > 0.85) {
-      cout << "#### Error (surface): high T/mu_b (T=" << TC << "/mu_b=" << mubC << ") ####\n";
+      cout << "#### Error (surface): high T/mu_b (T=" << TC << "/mu_b=" << mubC << ") #### FREEZEOUT \n";
      }
      if (eC > ecrit * 2.0 || eC < ecrit * 0.5) nsusp++;
      for (int jx = 0; jx < 2; jx++)
@@ -1031,4 +1032,35 @@ void Fluid::InitialAnisotropies(double tau0) {
  }
 
  exit(1) ;
+}
+
+void Fluid::addParticle(Particle _particle) {
+ double source[7];
+ double dv = dx * dy * dz;
+ // where to smooth the particle out
+ int ixc = _particle.getIxc();
+ int smoothx = _particle.getNsmoothX();
+ int iyc = _particle.getIyc();
+ int smoothy = _particle.getNsmoothY();
+ int izc = _particle.getIzc();
+ int smoothz = _particle.getNsmoothZ();
+ 
+ for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
+  for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
+   for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+     if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+      
+      const double xdiff = _particle.getX() - (minx + ix * dx);
+      const double ydiff = _particle.getY() - (miny + iy * dy);
+      const double zdiff = _particle.getZ() - (minz + iz * dz);
+
+      double weight = _particle.getWeight(xdiff, ydiff, zdiff);
+      source[0] = _particle.getE() * weight / dv;
+      source[1] = _particle.getPx() * weight / dv;
+      source[2] = _particle.getPy() * weight / dv;
+      source[3] = _particle.getPz() * weight / dv;
+      source[4] = _particle.getB() * weight / dv;
+      source[5] = _particle.getQ() * weight / dv;
+      getCell(ix,iy,iz)->addParticleSource(source);
+ }
 }

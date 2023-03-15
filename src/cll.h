@@ -21,6 +21,7 @@
 #include <cmath>
 #include "inc.h"
 class EoS;
+class Particle;
 
 //#define NAN_DEBUG
 
@@ -50,6 +51,7 @@ private:
  // viscCorrCut: flag if the viscous corrections are cut for this cell:
  // 1.0 = uncut, < 1 :  cut by this factor
  double viscCorrCut;
+ double S[7];     // sources from incoming particles
 
 public:
  Cell();
@@ -215,4 +217,13 @@ public:
  inline void setViscCorrCutFlag(double value) { viscCorrCut = value; }
  inline double getViscCorrCutFlag(void) { return viscCorrCut; }
  void Dump(double tau);  // dump the contents of the cell into dump.dat
+
+ // particle sources for dynamical initialization
+ inline void addParticleSource(double* _S){
+  for (int i = 0; i < 7; i++) S[i] += _S[i];
+ };
+ inline void clearParticleSource(void) {
+  for (int i = 0; i < 7; i++) S[i] = 0.;
+ }
+ void updateByParticleSource();
 };
