@@ -1,7 +1,9 @@
 #include <vector>
+#include <queue>
 
 class Fluid;
 class EoS;
+class Particle;
 
 class IcPartSMASH {
 private:
@@ -10,10 +12,18 @@ private:
  double dx, dy, dz;
  double ***T00, ***T0x, ***T0y, ***T0z, ***QB, ***QE;
  // auxiliary particle values for reading from file
+ //#ifdef CARTESIAN 
+ double T_val, Z_val, E_val, Pz_val, M_val;
+ //#else
  double Tau_val, X_val, Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val;
+ //#endif
  int Id_val, Charge_val;
   // auxiliary particle arrays
+ //#ifdef CARTESIAN
+ std::vector<double> T, Z, E, Pz;
+ //#else
  std::vector<double> Tau, X, Y, Eta, Mt, Px, Py, Rap;
+ //#endif
  std::vector<int> Id, Charge;
 
  double tau0;
@@ -74,6 +84,8 @@ private:
 
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0);
+ IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, std::queue<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
+ void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles);
 };

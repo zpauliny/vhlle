@@ -27,6 +27,7 @@
 #include "eos.h"
 #include "cll.h"
 #include "trancoeff.h"
+#include "particle.h"
 
 using namespace std;
 
@@ -1119,4 +1120,21 @@ void Hydro::performStep(void) {
  }
  //==== finishing work ====
  f->correctImagCellsFull();
+}
+
+void Hydro::addParticles(queue<Particle>* particles) {
+//==== particles coming in ====
+ double t0 = particles->front().getT();
+ while (t0 <= t) {
+   Particle particleToInject = particles->front();
+   f->addParticle(particleToInject);
+   particles->pop();
+   t0 = particles->front().getT(); 
+ }
+ for (int ix = 0; ix < f->getNX(); ix++)
+  for (int iy = 0; iy < f->getNY(); iy++)
+   for (int iz = 0; iz < f->getNZ(); iz++) {
+    f->getCell(ix, iy, iz)->updateByParticleSource();
+    f->getCell(ix, iy, iz)->clearParticleSource();
+   } 
 }

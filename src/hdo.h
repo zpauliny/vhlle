@@ -1,8 +1,10 @@
+#include <queue>
 
 class Cell;
 class Fluid;
 class EoS;
 class TransportCoeff;
+class Particle;
 
 // this class implements the hydrodynamic evolution and
 // contains the hydrodynamic algorithm
@@ -57,4 +59,6 @@ public:
  #ifdef CARTESIAN
  double time() { return t; }
  #endif
+ // adds sources from incoming particles into the hydro
+ void addParticles(std::queue<Particle>* particles);
 };

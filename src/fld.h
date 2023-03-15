@@ -67,4 +67,6 @@ public:
  void outputSurface(double tau);
  void outputCorona(double tau);
  void InitialAnisotropies(double tau0);
+
+ void addParticle(Particle _particle);
 };
