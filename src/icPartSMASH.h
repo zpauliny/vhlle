@@ -80,7 +80,7 @@ public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, std::queue<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
- void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles);
+ void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double* ctime);
 };
 
 struct spatialVector {

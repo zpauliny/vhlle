@@ -60,7 +60,8 @@ bool freezeoutOnly {false};  // freezoutOnly 1 for true, 0 for false
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel 
 
 void setDefaultParameters() {
- tauResize = 4.0;
+  // specifically for dynamical initialization, do not resize
+  tauResize = 100.0;
 }
 
 void readParameters(char *parFile) {
@@ -275,6 +276,7 @@ int main(int argc, char **argv) {
  queue<Particle>* particles = new queue<Particle>();
  time_t start = 0, end;
  time(&start);
+ Particle one_particle;
 
  // read parameters from file
  setDefaultParameters();
@@ -313,6 +315,8 @@ int main(int argc, char **argv) {
                etamax, dtau, eCrit);
  cout << "fluid allocation done\n";
 
+ double* timeInit = new double; // current time, tau or t depending on the coordinate frame
+
  // initial conditions
  if (icModel == 1) {  // optical Glauber
   ICGlauber *ic = new ICGlauber(epsilon0, impactPar, tau0);
@@ -348,7 +352,7 @@ int main(int argc, char **argv) {
    delete ic;
  } else if(icModel==9) { // SMASH dynamical IC
    IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, particles);
-   ic->setIC(f,eos,particles);
+   ic->setIC(f,eos,particles,timeInit);
    delete ic;
  } else {
   cout << "icModel = " << icModel << " not implemented\n";
@@ -365,14 +369,12 @@ int main(int argc, char **argv) {
 
  // hydro init
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
- start = 0;
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
  f->outputCorona(tau0);
 
  bool resized = false; // flag if the grid has been resized
- 
  std::string dir=outputDir.c_str();
  VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin, vtk_cartesian);
 
@@ -391,13 +393,12 @@ int main(int argc, char **argv) {
    h->setDtau(h->getDtau() / nSubSteps);
    for (int j = 0; j < nSubSteps; j++){
     h->performStep();
-    h->addParticles(particles);
    }
    h->setDtau(h->getDtau() * nSubSteps);
    cout << "timestep reduced by " << nSubSteps << endl;
-  } else
+  } else 
    h->performStep();
-   h->addParticles(particles);
+   if (particles->size() > 0) h->addParticles(particles);
    f->outputSurface(h->getTau());
   if (!freezeoutOnly)
    f->outputGnuplot(h->getTau());
@@ -412,6 +413,8 @@ int main(int argc, char **argv) {
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
+ 
+ cout << "Is particle queue empty: " << particles->empty() << endl;
 
  delete f;
  delete h;

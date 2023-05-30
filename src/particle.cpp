@@ -8,6 +8,22 @@
 
 using namespace std;
 
+Particle::Particle(){
+   B = 0;
+   Q = 0;
+   S = 0;
+
+   t = 0;
+   x = 0;
+   y = 0;
+   z = 0;
+   e = 0.0;
+   px = 0.0;
+   py = 0.0;
+   pz = 0.0; 
+   R = 0.0;
+}
+
 Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
       double _y, double _z, double _e, double _px, double _py, double _pz){
     B = _B;
@@ -39,16 +55,13 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     iyc = round((y - ymin) / dy);
     izc = round((z - zmin) / dz);
     
-    cout << ixc << " " << iyc << " " << izc << endl;
-
-    
+      
     const double range = 2.0;
     
     nsmoothx = static_cast<int>(range * R / dx);
     nsmoothy = static_cast<int>(range * R / dy);
     nsmoothz = static_cast<int>(range * R / dz);
-    cout << nsmoothx << " " << nsmoothy << " " << nsmoothz << endl;
-
+    
     gauss_norm = calculateNorm(f,R);
 }
 
