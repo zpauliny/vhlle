@@ -153,6 +153,10 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
  Rgz = _Rgz;
 
+ // helper variables for read-out
+ double x1, x2, x3, x4, x5, x6, x7;
+ double x8, x9, x10;
+
  // initialize the grid of conserved quantities
  T00 = new double**[nx];
  T0x = new double**[nx];
@@ -185,7 +189,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   }
  }
 
- cout << "I am in the class \n";                          
+ //cout << "I am in the class \n";                          
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
@@ -196,16 +200,24 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  int np = 0;  // particle counter
  string line;
  istringstream instream;
- while (!fin.eof()) {
+ getline(fin, line);
+ getline(fin, line);
+ instream.str(line);
+ instream.seekg(0);
+ instream.clear();
+ while (true) {
   getline(fin, line);
+  if( fin.eof() ) break;
   instream.str(line);
   instream.seekg(0);
   instream.clear();
-  if (line[0] == '#') continue;
+  //if (line[0] == '#') continue;
   // Read line
   if (!instream.fail()) {
   instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
-              Py_val >> Pz_val >> Id_val >> Charge_val;
+              Py_val >> Pz_val >> Id_val >> x1 >> Charge_val >> x2 >> x3 >>
+              x4 >> x5 >> x6 >> x7 >> x8 >> x9 >> x10;
+  //cout << T_val << " " << E_val << " " << Id_val << endl;
   int Baryon_val = 0;
   for (auto &code : PDG_Codes_Baryons) {
         if (Id_val == code) {
@@ -218,7 +230,8 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   particles->push(particleIn);
   
   
-   np++;
+  np++;
+  //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
   }
   else if (np > 0) {
    // cout<<"readF14:instream: failure reading data\n" ;
@@ -232,6 +245,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    // if(nevents>10000) return ;
   }
  }
+ cout << "number of particles = " << np << ", in queue = " << particles->size() << endl;
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
  }
@@ -372,13 +386,14 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
 
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
-void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles) {
+void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* timeInit) {
  double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
  double weight;
 
  double t0 = particles->front().getT();
  double t = t0;
+ *timeInit = t0;
  
  // pick particles that left SMASH the earliest
  while (t <= t0) {
@@ -421,13 +436,10 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles) {
     Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
     Q[NS_] = 0.0;
     transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
-    if (e < 1e-7 || fabs(f->getX(ix)) > 10. || fabs(f->getY(iy)) > 10. ||
-        fabs(f->getZ(iz)) > 5.) {
-     e = nb = nq = 0.0;
-     vx = vy = vz = 0.0;
-    }
+
     Cell* c = f->getCell(ix, iy, iz);
-    c->setPrimVar(eos, tau0, e, nb, nq, ns, vx, vy, vz);
+    c->setPrimVar(eos, 1.0, e, nb, nq, ns, vx, vy, vz);
+    c->getQ(Q);
     if (e > 0.) c->setAllM(1.);
  }
  // fluid initialized + particles queue awaits

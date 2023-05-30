@@ -14,6 +14,7 @@ class Particle {
                              // function to calculate the norm of the kernel
          
     public:
+     Particle();
      Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
       double _y, double _z, double _e, double _px, double _py, double _pz);
      ~Particle(){};
