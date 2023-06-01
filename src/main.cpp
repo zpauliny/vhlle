@@ -242,6 +242,24 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
  return fnew;
 }
 
+void output_e(double t, Fluid* f, ofstream& file_e) {
+ double x, y, z;
+ double e, p, nb, nq, ns, vx, vy, vz;
+ Cell *c;
+ file_e << t << "\n";
+ for (int ix = 0; ix < f->getNX(); ix++) 
+   for (int iy = 0; iy < f->getNY(); iy++) 
+    for (int iz = 0; iz < f->getNZ(); iz++) {
+     c = f->getCell(ix, iy, iz);
+     x = f->getX(ix);
+     y = f->getY(iy);
+     z = f->getZ(iz);
+     f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
+     file_e << e << " "; 
+  }
+  file_e << "\n";
+}
+
 // program parameters, to be read from file
 // int nx, ny, nz, eosType ;
 // double xmin, xmax, ymin, ymax, zmin, zmax, tau0, tauMax, dtau ;
@@ -356,16 +374,32 @@ int main(int argc, char **argv) {
  double ctime;
  #ifdef CARTESIAN
  h = new Hydro(f, eos, trcoeff, *timeInit, dtau);
+ ctime = h->time();
+ cout << "Hydro starting at " << ctime << endl;
+ double ftime = ctime + 2.0;
  #else
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
  #endif
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
- f->outputCorona(tau0);
+ //f->outputCorona(tau0);
+
+ // initialize energy density output
+ string outfilename = outputDir.c_str();
+ outfilename.append("/energy_density.dat");
+ ofstream file_e(outfilename.c_str());
+ file_e << "# block at t, energy_density: iterating over z, y, x \n";
+ file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
+ file_e << "# " << xmin << " " << xmax << " " <<
+   ymin << " " << ymax << " " << etamin << " " <<
+   etamax;
+ file_e << "# Nx, Ny, Nz: \n";
+ file_e << "# " << nx << " " << ny << " " << nz << "\n";
 
  bool resized = false; // flag if the grid has been resized
-
+ 
+ int timestep = 0;  
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
@@ -389,21 +423,23 @@ int main(int argc, char **argv) {
   } else 
    h->performStep();
    
-  #ifdef CARTESIAN
-  ctime = h->time();
-  #else
-  ctime = h->getTau();
-  #endif
-  if (particles->size() > 0) h->addParticles(particles, ctime);
-
-  f->outputSurface(ctime);
+  if (particles->size() > 0) h->addParticles(particles);
+  
+  // freeze-out only after ftime
+  if (ctime > ftime)
+   f->outputSurface(ctime);
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
+  
+  // output energy density at every 10th timestep
+  if (timestep%10 == 0) output_e(ctime, f, file_e);
+    
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
    f = expandGrid2x(h, eos, eosH, trcoeff);
    resized = true;
   }
+  timestep++;
  } while(ctime<tauMax+0.0001);
 
  end = 0;
@@ -418,4 +454,5 @@ int main(int argc, char **argv) {
  delete eos;
  delete eosH;
  delete particles;
+ file_e.close();
 }
