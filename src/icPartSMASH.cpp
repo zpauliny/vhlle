@@ -269,13 +269,12 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   instream.str(line);
   instream.seekg(0);
   instream.clear();
-  //if (line[0] == '#') continue;
+  if (line[0] == '#') continue;
   // Read line
   if (!instream.fail()) {
   instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
               Py_val >> Pz_val >> Id_val >> x1 >> Charge_val >> x2 >> x3 >>
               x4 >> x5 >> x6 >> x7 >> x8 >> x9 >> x10;
-  //cout << T_val << " " << E_val << " " << Id_val << endl;
   int Baryon_val = 0;
   for (auto &code : PDG_Codes_Baryons) {
         if (Id_val == code) {

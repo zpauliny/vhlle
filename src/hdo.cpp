@@ -1050,19 +1050,20 @@ void Hydro::performStep(void) {
  f->correctImagCellsFull();
 }
 
-void Hydro::addParticles(queue<Particle>* particles, double currentTime) {
+void Hydro::addParticles(queue<Particle>* particles) {
  //==== particles coming in ====
- double t = particles->front().getT();
- while (t <= currentTime) {
+ double particle_t = particles->front().getT();
+ double current_t = t;
+ while (particle_t < current_t) {
    if (particles->size() > 0) {
     Particle particleToInject = particles->front();
-    cout << "PARTICLE COMING IN!\n";
+    cout << "particle at t, e:\n";
     cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
     f->addParticle(particleToInject);
     particles->pop();
     cout << "particles in queue: " << particles->size() << endl;
-    if (particles->size() > 0) t = particles->front().getT();
-    else t = 1000.;
+    if (particles->size() > 0) particle_t = particles->front().getT();
+    else particle_t = 1000.;
    } 
  }
  for (int ix = 0; ix < f->getNX(); ix++)
