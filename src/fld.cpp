@@ -500,9 +500,11 @@ void Fluid::outputSurface(double tau) {
     eta = getZ(iz);
     const double cosh_int = (sinh(eta + 0.5 * dz) - sinh(eta - 0.5 * dz)) / dz;
     const double sinh_int = (cosh(eta + 0.5 * dz) - cosh(eta - 0.5 * dz)) / dz;
-    E += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+    double E1 = tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
              (cosh_int - tanh(vz) * sinh_int) -
-         tau * p * cosh_int;
+         tau * p * cosh_int; 
+    if (e < 1.e-6) E1 = 0.0;
+    E += E1;
     Nb1 += Q[NB_];
     Nb2 += tau * nb * (cosh_int - tanh(vz) * sinh_int) /
            sqrt(1. - vx * vx - vy * vy - tanh(vz) * tanh(vz));
@@ -513,9 +515,11 @@ void Fluid::outputSurface(double tau) {
      exit(1);
     }
     //--------------
-    Efull += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+    double E2 = tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
                  (cosh(eta) - tanh(vz) * sinh(eta)) -
              tau * p * cosh(eta);
+    if (e < 1.e-6) E2 = 0.0;
+    Efull += E2;
     if (trcoeff->isViscous())
      Efull +=
          tau * c->getpi(0, 0) * cosh(eta) + tau * c->getpi(0, 3) * sinh(eta);
@@ -741,9 +745,11 @@ output::f2d << endl;
     eta = getZ(iz);
     const double cosh_int = (sinh(eta + 0.5 * dz) - sinh(eta - 0.5 * dz)) / dz;
     const double sinh_int = (cosh(eta + 0.5 * dz) - cosh(eta - 0.5 * dz)) / dz;
-    E += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+    double E1 = tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
              (cosh_int - tanh(vz) * sinh_int) -
          tau * p * cosh_int;
+    if (e < 1.e-6) E1 = 0.0;
+    E += E1;
     Nb1 += Q[NB_];
     Nb2 += tau * nb * (cosh_int - tanh(vz) * sinh_int) /
            sqrt(1. - vx * vx - vy * vy - tanh(vz) * tanh(vz));
@@ -754,9 +760,11 @@ output::f2d << endl;
      exit(1);
     }
     //--------------
-    Efull += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+    double E2 = tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
                  (cosh(eta) - tanh(vz) * sinh(eta)) -
              tau * p * cosh(eta);
+    if (e < 1.e-6) E2 = 0.0;
+    Efull += E2;
     if (trcoeff->isViscous())
      Efull +=
          tau * c->getpi(0, 0) * cosh(eta) + tau * c->getpi(0, 3) * sinh(eta);
@@ -1034,9 +1042,14 @@ void Fluid::InitialAnisotropies(double tau0) {
  exit(1) ;
 }
 
-void Fluid::addParticle(Particle _particle) {
+double weight_function(double xdiff, double ydiff, double zdiff, double R, double tau) {
+    
+    return exp(-1.0 * (xdiff * xdiff + ydiff * ydiff + zdiff * zdiff * tau * tau) / 2.0 / R / R);
+ }
+
+void Fluid::addParticleSource(Particle _particle, double _tau, double _dtau) {
  double source[7];
- double dv = dx * dy * dz;
+ double dv = dx * dy * dz * _tau;
  // where to smooth the particle out
  int ixc = _particle.getIxc();
  int smoothx = _particle.getNsmoothX();
@@ -1044,23 +1057,41 @@ void Fluid::addParticle(Particle _particle) {
  int smoothy = _particle.getNsmoothY();
  int izc = _particle.getIzc();
  int smoothz = _particle.getNsmoothZ();
+
+ // at this point R for jets is hard-coded here
+ double R = 0.4 / sqrt(2.0);
+ double gauss_norm = 0.0;
+ for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
+  for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
+   for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+     if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+    
+      double xdiff = _particle.getX() - (minx + ix * dx);
+      double ydiff = _particle.getY() - (miny + iy * dy);
+      double zdiff = _particle.getZ() - (minz + iz * dz);
+      gauss_norm += weight_function(xdiff, ydiff, zdiff, R, _tau);
+  }
  
  for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
   for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
    for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
      if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
-      
-      const double xdiff = _particle.getX() - (minx + ix * dx);
-      const double ydiff = _particle.getY() - (miny + iy * dy);
-      const double zdiff = _particle.getZ() - (minz + iz * dz);
+    
+      double xdiff = _particle.getX() - (minx + ix * dx);
+      double ydiff = _particle.getY() - (miny + iy * dy);
+      double zdiff = _particle.getZ() - (minz + iz * dz);
+      // where in eta is the smearing happenning
+      double _eta = minz + iz * dz;
 
-      double weight = _particle.getWeight(xdiff, ydiff, zdiff);
-      source[0] = _particle.getE() * weight / dv;
-      source[1] = _particle.getPx() * weight / dv;
-      source[2] = _particle.getPy() * weight / dv;
-      source[3] = _particle.getPz() * weight / dv;
-      source[4] = _particle.getB() * weight / dv;
-      source[5] = _particle.getQ() * weight / dv;
+      double weight = 0.0;
+      
+      if (gauss_norm > 1.e-9) weight = weight_function(xdiff, ydiff, zdiff, R, _tau) / gauss_norm;
+      source[0] = _particle.getDEtau(_eta) * weight / dv;
+      source[1] = _particle.getDEx() * weight / dv;
+      source[2] = _particle.getDEy() * weight / dv;
+      source[3] = _particle.getDEeta(_eta) * weight / dv;
+      source[4] = 0.0;
+      source[5] = 0.0;
       getCell(ix,iy,iz)->addParticleSource(source);
- }
+  }
 }

@@ -54,5 +54,5 @@ public:
  // gets the current proper time
  inline double getTau() const { return tau; }
  // adds sources from incoming particles into the hydro
- void addParticles(std::queue<Particle>* particles);
+ void addParticleSource(std::queue<Particle>* particles);
 };

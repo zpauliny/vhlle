@@ -16,7 +16,7 @@ private:
  int Id_val, Charge_val, Baryon_val, Strangeness_val;
   // auxiliary particle arrays
  std::vector<double> Tau, X, Y, Eta, Mt, Px, Py, Rap;
- std::vector<int> Id, Charge;
+ std::vector<int> Id, Charge, Baryon, Strangeness;
 
  double tau0;
  double Rgx, Rgy, Rgz;
@@ -77,10 +77,11 @@ private:
 
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0, int _smoothingType);
- IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, std::queue<Particle>* particles);
+ IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0, int _smoothingType,
+      std::queue<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
- void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double* ctime);
+ void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double _pCut);
 };
 
 struct spatialVector {
@@ -90,6 +91,7 @@ struct spatialVector {
 };
 
 struct velocityVector {
+    double vt;
     double vx;
     double vy;
     double vz;

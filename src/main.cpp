@@ -57,7 +57,8 @@ double etaS, zetaS, eCrit, eEtaSMin, al, ah, aRho, T0, etaSMin;
 int icModel,glauberVariable =1;  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 double epsilon0, Rgt, Rgz, impactPar, s0ScaleFactor;
 bool freezeoutOnly {false};  // freezoutOnly 1 for true, 0 for false
-int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel 
+int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
+double pCut_jets {0.0}; // particles above pCut act as sources 
 
 void setDefaultParameters() {
   // specifically for dynamical initialization, do not resize
@@ -153,6 +154,8 @@ void readParameters(char *parFile) {
    freezeoutOnly = atoi(parValue);
   else if (strcmp(parName, "smoothingType") == 0)
    smoothingType = atoi(parValue);
+  else if (strcmp(parName, "pCut_jets") == 0)
+   pCut_jets = atof(parValue);
   else if (parName[0] == '!')
    cout << "CCC " << sline.str() << endl;
   else
@@ -210,6 +213,7 @@ void printParameters() {
  cout << "VTK output = " << vtk << endl;
  cout << "VTK output values = " << vtk_values << endl;
  cout << "VTK cartesian = " << vtk_cartesian << endl;
+ cout << "pCut_jets = " << pCut_jets << endl;
  cout << "======= end parameters =======\n";
 }
 
@@ -333,8 +337,6 @@ int main(int argc, char **argv) {
                etamax, dtau, eCrit);
  cout << "fluid allocation done\n";
 
- double* timeInit = new double; // current time, tau or t depending on the coordinate frame
-
  // initial conditions
  if (icModel == 1) {  // optical Glauber
   ICGlauber *ic = new ICGlauber(epsilon0, impactPar, tau0);
@@ -369,13 +371,23 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==9) { // SMASH dynamical IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, particles);
-   ic->setIC(f,eos,particles,timeInit);
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, smoothingType, particles);
+   cout << "class opened, i have a queue of " << particles->size() << " particles \n";
+   ic->setIC(f,eos,particles,pCut_jets);
    delete ic;
  } else {
   cout << "icModel = " << icModel << " not implemented\n";
  }
  cout << "IC done\n";
+
+ // set "jets" massless
+ for (int i=0; i < particles->size(); i++) {
+  Particle jet = particles->front();
+  jet.setMassless();
+  jet.setR(f, 0.2828);
+  particles->pop();
+  particles->push(jet);
+ }
 
  // For calculating initial anisotropy without running full hydro, uncomment following line
  //f->InitialAnisotropies(tau0) ;
@@ -393,6 +405,8 @@ int main(int argc, char **argv) {
  f->outputCorona(tau0);
 
  // initialize energy density output
+ // leave out for the moment
+ /*
  string outfilename = outputDir.c_str();
  outfilename.append("/energy_density.dat");
  ofstream file_e(outfilename.c_str());
@@ -402,7 +416,7 @@ int main(int argc, char **argv) {
    ymin << " " << ymax << " " << etamin << " " <<
    etamax;
  file_e << "# Nx, Ny, Nz: \n";
- file_e << "# " << nx << " " << ny << " " << nz << "\n";
+ file_e << "# " << nx << " " << ny << " " << nz << "\n";*/
 
  bool resized = false; // flag if the grid has been resized
  std::string dir=outputDir.c_str();
@@ -430,7 +444,7 @@ int main(int argc, char **argv) {
    cout << "timestep reduced by " << nSubSteps << endl;
   } else 
    h->performStep();
-  if (particles->size() > 0) h->addParticles(particles);
+  if (particles->size() > 0) h->addParticleSource(particles);
    f->outputSurface(h->getTau());
   if (!freezeoutOnly)
    f->outputGnuplot(h->getTau());
@@ -441,22 +455,24 @@ int main(int argc, char **argv) {
   }
   
   // output energy density at every 10th timestep
-  if (timestep%10 == 0) output_e(ctime, f, file_e);
+  //if (timestep%10 == 0) output_e(ctime, f, file_e);
  
   timestep++;
- } while(ctime<tauMax+0.0001);
+ } while(h->getTau() < tauMax+0.0001); 
 
  end = 0;
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
  
+ cout << "How many particles in the queue: " << particles->size() << endl;
  cout << "Is particle queue empty: " << particles->empty() << endl;
+
 
  delete f;
  delete h;
  delete eos;
  delete eosH;
  delete particles;
- file_e.close();
+ //file_e.close();
 }

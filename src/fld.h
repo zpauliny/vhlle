@@ -68,5 +68,5 @@ public:
  void outputCorona(double tau);
  void InitialAnisotropies(double tau0);
 
- void addParticle(Particle _particle);
+ void addParticleSource(Particle _particle, double _tau, double _dtau);
 };

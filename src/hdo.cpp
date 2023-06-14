@@ -1050,22 +1050,21 @@ void Hydro::performStep(void) {
  f->correctImagCellsFull();
 }
 
-void Hydro::addParticles(queue<Particle>* particles) {
- //==== particles coming in ====
- double particle_t = particles->front().getT();
- double current_t = t;
- while (particle_t < current_t) {
-   if (particles->size() > 0) {
-    Particle particleToInject = particles->front();
-    cout << "particle at t, e:\n";
-    cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
-    f->addParticle(particleToInject);
-    particles->pop();
-    cout << "particles in queue: " << particles->size() << endl;
-    if (particles->size() > 0) particle_t = particles->front().getT();
-    else particle_t = 1000.;
-   } 
+void Hydro::addParticleSource(queue<Particle>* particles) {
+ //==== pumping in energy and momentum ====
+ double n = particles->size();
+ 
+ // go over the queue once
+ // push back only the surviving jets 
+ for (int i = 0; i < n; i++) {
+   Particle thisParticle = particles->front();
+   double dE = thisParticle.getDE(dt);
+   thisParticle.updateParticle(dE, dt);
+   f->addParticleSource(thisParticle, tau, dt);
+   particles->pop();
+   if (!thisParticle.isFluidized()) particles->push(thisParticle);
  }
+ 
  for (int ix = 0; ix < f->getNX(); ix++)
   for (int iy = 0; iy < f->getNY(); iy++)
    for (int iz = 0; iz < f->getNZ(); iz++) {

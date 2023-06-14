@@ -218,7 +218,7 @@ public:
  inline double getViscCorrCutFlag(void) { return viscCorrCut; }
  void Dump(double tau);  // dump the contents of the cell into dump.dat
 
- // particle sources for dynamical initialization
+ // particle sources for dynamical initialization / jets
  inline void addParticleSource(double* _S){
   for (int i = 0; i < 7; i++) S[i] += _S[i];
  };
