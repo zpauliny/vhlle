@@ -379,12 +379,13 @@ int main(int argc, char **argv) {
   cout << "icModel = " << icModel << " not implemented\n";
  }
  cout << "IC done\n";
+ cout << "There are " << particles->size() << " particles in the queue." << endl;
 
  // set "jets" massless
  for (int i=0; i < particles->size(); i++) {
   Particle jet = particles->front();
   jet.setMassless();
-  jet.setR(f, 0.2828);
+  //jet.setR(f, 0.2828);
   particles->pop();
   particles->push(jet);
  }
@@ -465,7 +466,7 @@ int main(int argc, char **argv) {
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
  
- cout << "How many particles in the queue: " << particles->size() << endl;
+ cout << "There are " << particles->size() << " particles in the queue." << endl;
  cout << "Is particle queue empty: " << particles->empty() << endl;
 
 

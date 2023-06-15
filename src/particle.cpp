@@ -129,6 +129,11 @@ double Particle::calculateNorm(Fluid *f, double R) {
    const double dz = f->getDz();
 
    double norm;
+   const double gammaz = cosh(rap - eta);
+   // hard-coded here for 200 GeV, TODO
+   const double Rgx = 1.0;
+   const double Rgy = 1.0;
+   const double Rgz = 1.1;
    
    for (int ix = ixc - nsmoothx; ix < ixc + nsmoothx + 1; ix++)
     for (int iy = iyc - nsmoothy; iy < iyc + nsmoothy + 1; iy++)
@@ -140,7 +145,8 @@ double Particle::calculateNorm(Fluid *f, double R) {
        const double zdiff = eta - (zmin + iz * dz);
        spatialVector rdiff {xdiff, ydiff, zdiff};
        velocityVector velocity = velocityHyperbolic(mt, px, py, rap, eta, zdiff, tau);
-       norm += smoothingKernelInvariant(rdiff, velocity, R, tau);
+       //norm += smoothingKernelInvariant(rdiff, velocity, R, tau);
+       norm += smoothingKernel(rdiff, gammaz, tau,  Rgx, Rgy, Rgz);
        
      }
     return norm;
@@ -148,9 +154,16 @@ double Particle::calculateNorm(Fluid *f, double R) {
 
 double Particle::getWeight(double _xdiff, double _ydiff, double _zdiff) {
 
+   const double gammaz = cosh(rap - eta);
+   // hard-coded here for 200 GeV, TODO
+   const double Rgx = 1.0;
+   const double Rgy = 1.0;
+   const double Rgz = 1.1;
+
    spatialVector rdiff {_xdiff, _ydiff, _zdiff};
    velocityVector velocity {velocityHyperbolic(mt, px, py, rap, eta, _zdiff, tau)};
-   double weight = 1. / gauss_norm * smoothingKernelInvariant(rdiff, velocity, R, tau);
+   //double weight = 1. / gauss_norm * smoothingKernelInvariant(rdiff, velocity, R, tau);
+   double weight = 1. / gauss_norm * smoothingKernel(rdiff, gammaz, tau, Rgx, Rgy, Rgz);
 
    return weight;
 }
@@ -259,12 +272,14 @@ void Particle::updateParticle(double _dE, double _dtau) {
    eta = 0.5 * log((t + z) / (t - z));
 }
 
-double Particle::getDE(double _dtau) {
+double Particle::getDE(double _dtau, double _deta) {
    // formulae acc. to Pablos 2202.03414
    
    // choosing constant x_stop
    double x_stop = 3.0;
 
+   // logic here: velocity is c, dx = dt = 
+   //double dx = _dtau * cosh(eta) + tau * sinh(eta) * _deta;
    double dx = _dtau * cosh(eta);
    x_traveled += dx;
    double xratio = x_traveled * x_traveled / x_stop / x_stop;

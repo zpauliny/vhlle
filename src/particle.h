@@ -28,7 +28,7 @@ class Particle {
      double getE();
      double getPEta(int iz, Fluid *f);
      double getPEta();
-     double getDE(double _dtau);
+     double getDE(double _dtau, double _deta);
      void updateParticle(double _dE, double _dtau);
      void setMassless();
      void setR(Fluid *f, double _R); // to set R to a value appropriate for jets

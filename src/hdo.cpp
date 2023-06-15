@@ -1053,12 +1053,13 @@ void Hydro::performStep(void) {
 void Hydro::addParticleSource(queue<Particle>* particles) {
  //==== pumping in energy and momentum ====
  double n = particles->size();
+ double dz = f->getDz();
  
  // go over the queue once
  // push back only the surviving jets 
  for (int i = 0; i < n; i++) {
    Particle thisParticle = particles->front();
-   double dE = thisParticle.getDE(dt);
+   double dE = thisParticle.getDE(dt, dz);
    thisParticle.updateParticle(dE, dt);
    f->addParticleSource(thisParticle, tau, dt);
    particles->pop();
