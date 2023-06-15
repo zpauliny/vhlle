@@ -371,9 +371,8 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==9) { // SMASH dynamical IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, smoothingType, particles);
-   cout << "class opened, i have a queue of " << particles->size() << " particles \n";
-   ic->setIC(f,eos,particles,pCut_jets);
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, smoothingType, particles, pCut_jets);
+   ic->setIC(f, eos);
    delete ic;
  } else {
   cout << "icModel = " << icModel << " not implemented\n";

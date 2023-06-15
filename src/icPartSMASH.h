@@ -78,7 +78,7 @@ private:
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0, int _smoothingType);
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0, int _smoothingType,
-      std::queue<Particle>* particles);
+      std::queue<Particle>* particles, double _mTcut);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
  void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double _pCut);

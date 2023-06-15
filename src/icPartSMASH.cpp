@@ -198,22 +198,33 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 }
 
 // dynamical IC: set up queue of particles
-// works only #ifdef CARTESIAN
+// for jets: smooth out IC and set up queue of particles
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
-                         double _tau0, int _smoothingType, queue<Particle>* particles) {
+                         double _tau0, int _smoothingType, queue<Particle>* particles,
+                         double _mTcut) {
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
- 
  dx = f->getDx();
  dy = f->getDy();
  dz = f->getDz();
+ xmin = f->getX(0);
+ xmax = f->getX(nx - 1);
+ ymin = f->getY(0);
+ ymax = f->getY(ny - 1);
+ zmin = f->getZ(0);
+ zmax = f->getZ(nz - 1);
 
- Rgz = _Rgz;
  tau0 = _tau0;
+ Rgx = _Rgt;
+ Rgy = _Rgt;
+ Rgz = _Rgz;
+ nsmoothx = (int)(6.0 * Rgx / dx);  // smoothly distribute to +- this many cells
+ nsmoothy = (int)(6.0 * Rgy / dy);
+ nsmoothz = (int)(1.5 * Rgz / dz);
+
  isKernelInvariant = _smoothingType;
 
- // initialize the grid of conserved quantities
  T00 = new double**[nx];
  T0x = new double**[nx];
  T0y = new double**[nx];
@@ -236,7 +247,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    T0z[ix][iy] = new double[nz];
    QB[ix][iy] = new double[nz];
    QE[ix][iy] = new double[nz];
-   QS[ix][iy] = new double [nz];
+   QS[ix][iy] = new double[nz];
    for (int iz = 0; iz < nz; iz++) {
     T00[ix][iy][iz] = 0.0;
     T0x[ix][iy][iz] = 0.0;
@@ -248,7 +259,6 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    }
   }
  }
-
 #ifdef TSHIFT
  tau0 += tshift;
 #endif
@@ -283,28 +293,100 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    quantity[9] >> quantity[10] >> quantity[11] >> quantity[12] >> quantity[13];
  if (quantity[11] != "") 
   isBaryonIncluded = true;
-
- int nLine = 0; 
+  
  // Read subsequent lines
  while (!fin.eof()) {
-  //fin.ignore();
   getline(fin, line);
-  if (line[0] == '#') continue;
-  nLine += 1;
   instream.str(line);
   instream.seekg(0);
   instream.clear();
-  instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
+  // Read line
+  // if n_B is included: read in all quantities, incl. nB and nS
+  if (isBaryonIncluded)
+   instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
                Py_val >> Rap_val >> Id_val >> Charge_val >> Baryon_val >> 
                Strangeness_val;
+  // if not included: nB from PDG code, nS = 0
+  else {
+   instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
+               Py_val >> Rap_val >> Id_val >> Charge_val;
+   Baryon_val = 0;
+   for (auto &code : PDG_Codes_Baryons) {
+        if (Id_val == code) {
+          // PDG code > 0: baryon, else anti baryon
+          (code > 0) ? Baryon_val = 1 : Baryon_val = -1;
+        }
+   }
+   Strangeness_val = 0;
+  }
+  // Fill arrays
   if (!instream.fail()) {
-    Particle particleIn(f, Rgz, Baryon_val, Charge_val, Strangeness_val, Tau_val, X_val, 
-      Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val);
-    particles->push(particleIn);
-    np += 1;
+   if (Mt_val >= _mTcut) {
+     Particle one_particle(f, Rgz, Baryon_val, Charge_val, Strangeness_val, Tau_val, X_val, 
+                           Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val);
+     particles->push(one_particle);
+   }
+   else {
+    Tau.push_back(Tau_val);
+    X.push_back(X_val);
+    Y.push_back(Y_val);
+    Eta.push_back(Eta_val);
+    Mt.push_back(Mt_val);
+    Px.push_back(Px_val);
+    Py.push_back(Py_val);
+    Rap.push_back(Rap_val);
+    Id.push_back(Id_val);
+    Charge.push_back(Charge_val);
+    Baryon.push_back(Baryon_val);
+    Strangeness.push_back(Strangeness_val);
+
+#ifdef TSHIFT
+    Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
+                          (Tau[np] * cosh(Eta[np]) + tshift));
+    Tau[np] += tshift;
+#endif
+    E_smash += Mt_val * cosh(Rap_val);
+    B_smash += Baryon_val;
+    Q_smash += Charge_val;
+    S_smash += Strangeness_val;
+
+    np++;
+   }
+  }
+  else if (np > 0) {
+   // cout<<"readF14:instream: failure reading data\n" ;
+   // cout<<"stream = "<<instream.str()<<endl ;
+   if (nevents % 100 == 0) {
+    std::cout << "event = " << nevents << "  np = " << np << "\r";
+    std::cout << flush;
+   }
+   makeSmoothTable(np);
+   np = 0;
+
+   // Clear arrays for next event
+   Tau.clear();
+   X.clear();
+   Y.clear();
+   Eta.clear();
+   Mt.clear();
+   Px.clear();
+   Py.clear();
+   Rap.clear();
+   Id.clear();
+   Charge.clear();
+   Baryon.clear();
+   Strangeness.clear();
+
+   nevents++;
+   // if(nevents>10000) return ;
   }
  }
-  cout << "np = " << np << endl;
+ if (nevents > 1) {
+  std::cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+  std::cout << "Running vHLLE on averaged initial state from SMASH\n";
+ }
+ std::cout << "particle E = " << E_smash/ nevents << "  Nbar = " << B_smash / nevents 
+      << "  Ncharge = " << Q_smash / nevents << " Ns = " << S_smash / nevents << std::endl;
 } 
 
 IcPartSMASH::~IcPartSMASH() {
