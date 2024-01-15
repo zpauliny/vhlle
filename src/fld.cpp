@@ -485,7 +485,8 @@ void transformToLab(double eta, double &vx, double &vy, double &vz) {
  vz = tanh(Y);
 }
 
-void Fluid::outputSurface(double tau) {
+// return value: the number of surface elements reconstructed at the current timestep
+int Fluid::outputSurface(double tau) {
  static double nbSurf = 0.0;
  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, Q[7];
  double E = 0., Efull = 0., S = 0., Px = 0., vt_num = 0., vt_den = 0.,
@@ -791,7 +792,7 @@ void Fluid::outputSurface(double tau) {
 #ifdef SWAP_EOS
  swap(eos, eosH);
 #endif
- if (nelements == 0) exit(0);
+  return nelements;
 }
 
 void Fluid::outputCorona(double tau) {

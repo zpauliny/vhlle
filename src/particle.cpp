@@ -25,10 +25,11 @@ Particle::Particle(){
 }
 
 Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
-      double _y, double _z, double _e, double _px, double _py, double _pz){
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg){
     B = _B;
     Q = _Q;
     S = _S;
+    pdg = _pdg;
 
     t = _t;
     x = _x;

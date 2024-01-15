@@ -242,11 +242,12 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
  return fnew;
 }
 
-void output_e(double t, Fluid* f, ofstream& file_e) {
+void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
  double x, y, z;
  double e, p, nb, nq, ns, vx, vy, vz;
  Cell *c;
  file_e << t << "\n";
+ file_nb << t << "\n";
  for (int ix = 0; ix < f->getNX(); ix++) 
    for (int iy = 0; iy < f->getNY(); iy++) 
     for (int iz = 0; iz < f->getNZ(); iz++) {
@@ -255,9 +256,11 @@ void output_e(double t, Fluid* f, ofstream& file_e) {
      y = f->getY(iy);
      z = f->getZ(iz);
      f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
-     file_e << e << " "; 
+     file_e << e << " ";
+     file_nb << nb << " "; 
   }
   file_e << "\n";
+  file_nb << "\n";
 }
 
 // program parameters, to be read from file
@@ -386,9 +389,9 @@ int main(int argc, char **argv) {
  //f->outputCorona(tau0);
 
  // initialize energy density output
- string outfilename = outputDir.c_str();
- outfilename.append("/energy_density.dat");
- ofstream file_e(outfilename.c_str());
+ string outfile_e = outputDir.c_str();
+ outfile_e.append("/energy_density.dat");
+ ofstream file_e(outfile_e.c_str());
  file_e << "# block at t, energy_density: iterating over z, y, x \n";
  file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
  file_e << "# " << xmin << " " << xmax << " " <<
@@ -397,9 +400,23 @@ int main(int argc, char **argv) {
  file_e << "# Nx, Ny, Nz: \n";
  file_e << "# " << nx << " " << ny << " " << nz << "\n";
 
+ // initialize baryon number density output
+ string outfile_nb = outputDir.c_str();
+ outfile_nb.append("/baryon_number.dat");
+ ofstream file_nb(outfile_nb.c_str());
+ file_nb << "# block at t, energy_density: iterating over z, y, x \n";
+ file_nb << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
+ file_nb << "# " << xmin << " " << xmax << " " <<
+   ymin << " " << ymax << " " << etamin << " " <<
+   etamax;
+ file_nb << "# Nx, Ny, Nz: \n";
+ file_nb << "# " << nx << " " << ny << " " << nz << "\n";
+
+
  bool resized = false; // flag if the grid has been resized
  
- int timestep = 0;  
+ int timestep = 0;
+ int nelements = 1;  
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
@@ -425,14 +442,55 @@ int main(int argc, char **argv) {
    
   if (particles->size() > 0) h->addParticles(particles);
   
-  // freeze-out only after ftime
-  if (ctime > ftime)
-   f->outputSurface(ctime);
+  // freeze-out only after ftime and up until nelemens is 0
+  if ((ctime > ftime) && (nelements>0))
+   nelements = f->outputSurface(ctime);
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
+
+  // when nelements is 0: print out the particles still in the queue
+  // file an smash oscar format
+  if (nelements == 0) {
+    int particle_number = particles->size();
+    int n_part = 0;
+    if (particle_number > 0) {
+      string filename = outputDir.c_str();
+      filename.append("particle_lists.oscar");
+      ofstream outfile(filename.c_str());
+      outfile << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge \n";
+      outfile << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e \n";
+      while (particle_number > 0)
+      {
+        Particle particle_to_dump = particles->front();
+        double t = particle_to_dump.getT();
+        double x = particle_to_dump.getX();
+        double y = particle_to_dump.getY();
+        double z = particle_to_dump.getZ();
+        double mass = particle_to_dump.getM();
+        double p0 = particle_to_dump.getE();
+        double px = particle_to_dump.getPx();
+        double py = particle_to_dump.getPy();
+        double pz = particle_to_dump.getPz();
+        int pdg = particle_to_dump.getPdg();
+        int id = 0;
+        int charge = particle_to_dump.getQ();
+        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " << 
+                   p0 << " " << px << " " << py << " " << pz << " " << pdg << 
+                   " " << id << " " << charge << "\n";
+        n_part += 1;
+        particles->pop();
+        particle_number = particles->size();
+      }
+    }
+    nelements = -1;
+    // check-in about the procedure
+    std::cout << n_part << " particles were left after hydro evolution, " <<
+                 "nelements = " << nelements << ", particle queue is empty: " <<
+                 particles->empty() << "\n";
+  }
   
   // output energy density at every 10th timestep
-  if (timestep%10 == 0) output_e(ctime, f, file_e);
+  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb); 
     
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
@@ -455,4 +513,5 @@ int main(int argc, char **argv) {
  delete eosH;
  delete particles;
  file_e.close();
+ file_nb.close();
 }

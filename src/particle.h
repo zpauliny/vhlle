@@ -2,9 +2,10 @@ class Fluid;
 
 class Particle {
     private:
-     int B, Q, S;               // baryon number, charge, strangeness
+     int B, Q, S;            // baryon number, charge, strangeness
      double t, x, y, z;      // particle position
      double e, px, py, pz;   // particle momentum
+     int pdg;                // pdg code
      int ixc, iyc, izc;      // cell coordinates of the particle
      double R;               // sigma of the gaussian
      int nsmoothx, nsmoothy,
@@ -16,7 +17,7 @@ class Particle {
     public:
      Particle();
      Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
-      double _y, double _z, double _e, double _px, double _py, double _pz);
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg);
      ~Particle(){};
      double getWeight(int ix, int iy, int iz, Fluid *f, double R);
      double getWeight(double _xdiff, double _ydiff, double _zdiff);
@@ -33,6 +34,7 @@ class Particle {
      inline int getB(void) { return B; }
      inline int getQ(void) { return Q; }
      inline int getS(void) { return S; }
+     inline int getPdg(void) { return pdg; }
 
      inline double getT(void) { return t; }
      inline double getX(void) { return x; }
@@ -43,4 +45,6 @@ class Particle {
      inline double getPx(void) { return px; }
      inline double getPy(void) { return py; }
      inline double getPz(void) { return pz; }
+
+     inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
 };

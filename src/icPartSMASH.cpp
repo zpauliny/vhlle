@@ -225,7 +225,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
         }
   }
   Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val, 
-      Y_val, Z_val, E_val, Px_val, Py_val, Pz_val);
+      Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
   particles->push(particleIn);
   
   
