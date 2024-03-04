@@ -455,7 +455,7 @@ int main(int argc, char **argv) {
     int n_part = 0;
     if (particle_number > 0) {
       string filename = outputDir.c_str();
-      filename.append("particle_lists.oscar");
+      filename.append("/particle_lists.oscar");
       ofstream outfile(filename.c_str());
       outfile << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge \n";
       outfile << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e \n";
