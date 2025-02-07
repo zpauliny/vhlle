@@ -1168,6 +1168,7 @@ void Fluid::addParticle(Particle _particle) {
  int smoothy = _particle.getNsmoothY();
  int izc = _particle.getIzc();
  int smoothz = _particle.getNsmoothZ();
+ const double scale = _particle.getScale();
  
  for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
   for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
@@ -1179,12 +1180,12 @@ void Fluid::addParticle(Particle _particle) {
       const double zdiff = _particle.getZ() - (minz + iz * dz);
 
       double weight = _particle.getWeight(xdiff, ydiff, zdiff);
-      source[0] = _particle.getE() * weight / dv;
-      source[1] = _particle.getPx() * weight / dv;
-      source[2] = _particle.getPy() * weight / dv;
-      source[3] = _particle.getPz() * weight / dv;
-      source[4] = _particle.getB() * weight / dv;
-      source[5] = _particle.getQ() * weight / dv;
+      source[0] = _particle.getE() * weight * scale / dv;
+      source[1] = _particle.getPx() * weight * scale / dv;
+      source[2] = _particle.getPy() * weight * scale / dv;
+      source[3] = _particle.getPz() * weight * scale / dv;
+      source[4] = _particle.getB() * weight * scale / dv;
+      source[5] = _particle.getQ() * weight * scale / dv;
       getCell(ix,iy,iz)->addParticleSource(source);
  }
 }

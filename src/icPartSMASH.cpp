@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cfloat>
 #include <vector>
+#include <algorithm>  // For std::sort
 
 #include "eos.h"
 #include "eoChiral.h"
@@ -156,6 +157,9 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  // helper variables for read-out
  double x1, x2, x3, x4, x5, x6, x7;
  double x8, x9, x10;
+ std::vector<Particle> all_particles;
+ all_particles.clear();
+ all_particles.reserve(10000);
 
  // initialize the grid of conserved quantities
  T00 = new double**[nx];
@@ -211,7 +215,13 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   instream.str(line);
   instream.seekg(0);
   instream.clear();
-  if (line[0] == '#') continue;
+  if (line[0] == '#') {
+    if (line.size() >= 5 && line.substr(line.size() - 5) == "start") {
+      nevents++;
+      np = 0;
+    }
+    continue;
+  }
   // Read line
   if (!instream.fail()) {
   instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
@@ -226,9 +236,8 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   }
   Particle particleIn(f, Rgz, Baryon_val, Charge_val, 0, T_val, X_val, 
       Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
-  particles->push(particleIn);
-  
-  
+  //particles->push(particleIn);
+  all_particles.push_back(particleIn);
   np++;
   //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
   }
@@ -239,12 +248,19 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
     cout << "event = " << nevents << "  np = " << np << "\r";
     cout << flush;
    }
-   np = 0;
-   nevents++;
-   // if(nevents>10000) return ;
   }
  }
- cout << "number of particles = " << np << ", in queue = " << particles->size() << endl;
+ // sort particles by time
+ std::sort(all_particles.begin(), all_particles.end(),
+   [](const Particle &a, const Particle &b) -> bool { return a.getT() < b.getT(); });
+ cout << "IcPartSMASH: earliest particle at t = " << all_particles[0].getT() << endl;
+ cout << "IcPartSMASH:   latest particle at t = " << all_particles[all_particles.size()-1].getT() << endl;
+ cout << "total number of particles read = " << all_particles.size() << endl;
+ // copy the contents of the vector to the queue
+ for (auto &particle : all_particles) {
+   particle.setScale(1./nevents);
+   particles->push(particle);
+ }
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
  }
@@ -403,6 +419,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
   int smoothy = particleToSmooth.getNsmoothY();
   int izc = particleToSmooth.getIzc();
   int smoothz = particleToSmooth.getNsmoothZ();
+  const double scale = particleToSmooth.getScale();
     
   for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
    for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
@@ -411,12 +428,12 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
       
       weight = particleToSmooth.getWeight(ix, iy, iz, f, Rgz);
       
-      T00[ix][iy][iz] += particleToSmooth.getE() * weight;
-      T0x[ix][iy][iz] += particleToSmooth.getPx() * weight;
-      T0y[ix][iy][iz] += particleToSmooth.getPy() * weight;
-      T0z[ix][iy][iz] += particleToSmooth.getPz() * weight;
-      QB[ix][iy][iz] += particleToSmooth.getB() * weight;
-      QE[ix][iy][iz] += particleToSmooth.getQ() * weight;
+      T00[ix][iy][iz] += particleToSmooth.getE() * weight * scale;
+      T0x[ix][iy][iz] += particleToSmooth.getPx() * weight * scale;
+      T0y[ix][iy][iz] += particleToSmooth.getPy() * weight * scale;
+      T0z[ix][iy][iz] += particleToSmooth.getPz() * weight * scale;
+      QB[ix][iy][iz] += particleToSmooth.getB() * weight * scale;
+      QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
  }
  
  particles->pop();

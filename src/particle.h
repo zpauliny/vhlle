@@ -11,6 +11,7 @@ class Particle {
      int nsmoothx, nsmoothy,
       nsmoothz;              // smoothly distribute to +- this many cells
      double gauss_norm;      // normalization of the smearing kernel
+     double scale;         // scaling factor for the case Nevents>1
      double calculateNorm(Fluid *f, double R);
                              // function to calculate the norm of the kernel
          
@@ -19,6 +20,8 @@ class Particle {
      Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
       double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg);
      ~Particle(){};
+     void setScale(double _scale) { scale = _scale; }
+     double getScale() { return scale; }
      double getWeight(int ix, int iy, int iz, Fluid *f, double R);
      double getWeight(double _xdiff, double _ydiff, double _zdiff);
 
@@ -36,10 +39,10 @@ class Particle {
      inline int getS(void) { return S; }
      inline int getPdg(void) { return pdg; }
 
-     inline double getT(void) { return t; }
-     inline double getX(void) { return x; }
-     inline double getY(void) { return y; }
-     inline double getZ(void) { return z; }
+     inline double getT(void) const { return t; }
+     inline double getX(void) const { return x; }
+     inline double getY(void) const { return y; }
+     inline double getZ(void) const { return z; }
      
      inline double getE(void) { return e; }
      inline double getPx(void) { return px; }

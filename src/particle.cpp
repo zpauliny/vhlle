@@ -41,6 +41,7 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     pz = _pz; 
 
     R = _R;
+    scale = 1.0;
 
     const double xmin = f->getX(0);
     const double xmax = f->getX(f->getNX() - 1);
