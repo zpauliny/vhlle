@@ -487,6 +487,7 @@ int main(int argc, char **argv) {
     std::cout << n_part << " particles were left after hydro evolution, " <<
                  "nelements = " << nelements << ", particle queue is empty: " <<
                  particles->empty() << "\n";
+    break;
   }
   
   // output energy density at every 10th timestep
