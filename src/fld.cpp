@@ -364,17 +364,17 @@ void Fluid::updateM(double tau, double dt) {
           getCell(ix + 1, iy - 1, iz)->getMaxM() >= 1. ||
           getCell(ix - 1, iy + 1, iz)->getMaxM() >= 1. ||
           getCell(ix - 1, iy - 1, iz)->getMaxM() >= 1. ||
-          
+
           getCell(ix, iy + 1, iz + 1)->getMaxM() >= 1. ||
           getCell(ix, iy + 1, iz - 1)->getMaxM() >= 1. ||
           getCell(ix, iy - 1, iz + 1)->getMaxM() >= 1. ||
           getCell(ix, iy - 1, iz - 1)->getMaxM() >= 1. ||
-          
+
           getCell(ix + 1, iy, iz + 1)->getMaxM() >= 1. ||
           getCell(ix + 1, iy, iz - 1)->getMaxM() >= 1. ||
           getCell(ix - 1, iy, iz + 1)->getMaxM() >= 1. ||
           getCell(ix - 1, iy, iz - 1)->getMaxM() >= 1.) {
-      
+
        c->setDM(X_, 0.707 * dt / dx);
        c->setDM(Y_, 0.707 * dt / dy);
        c->setDM(Z_, 0.707 * dt / dz / tau);
@@ -395,7 +395,7 @@ void Fluid::updateM(double tau, double dt) {
 
 void Fluid::outputGnuplot(double tau) {
  // in Cartesian frame:
- // time t is passed as tau parameter. 
+ // time t is passed as tau parameter.
  // in such case getCMFvariables() re-sets tau=1 internally
  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz;
 
@@ -611,7 +611,7 @@ int Fluid::outputSurface(double tau) {
                 fabs(c->getpi(0, 1));
     pi0x_den += e / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz));
     #endif
-    
+
     //----- Cornelius stuff
     double QCube[2][2][2][2][7];
     double piSquare[2][2][2][10], PiSquare[2][2][2];
@@ -637,7 +637,7 @@ int Fluid::outputSurface(double tau) {
        // ---- get viscous tensor
        if (trcoeff->isViscous()) {
          for (int ii = 0; ii < 4; ii++)
-           for (int jj = 0; jj <= ii; jj++) 
+           for (int jj = 0; jj <= ii; jj++)
              piSquare[jx][jy][jz][index44(ii, jj)] = cc->getpi(ii, jj);
          PiSquare[jx][jy][jz] = cc->getPi();
        }
@@ -1209,12 +1209,12 @@ void Fluid::addParticle(Particle _particle) {
  int izc = _particle.getIzc();
  int smoothz = _particle.getNsmoothZ();
  const double scale = _particle.getScale();
- 
- for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
-  for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
-   for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+
+ for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++)
+  for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++)
+   for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++)
      if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
-      
+
       const double xdiff = _particle.getX() - (minx + ix * dx);
       const double ydiff = _particle.getY() - (miny + iy * dy);
       const double zdiff = _particle.getZ() - (minz + iz * dz);
@@ -1233,12 +1233,21 @@ void Fluid::addParticle(Particle _particle) {
  }
 }
 
-void Fluid::output_for_dilepton_rates(const char *dir, int timestep, 
-                                      double tau = 1) {
+static inline double fraction_QGP(double e) {
+  if (e > 1.0) {
+    return 1;
+  } else if (e >= 0.7) { //linearly from 0 to 1
+    return (e - 0.7)/(1.0 - 0.7);
+  }
+  return 0;
+}
+
+void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau) {
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
-  stringstream filename{dir};
-  filename << "/for_dilrates" << timestep << ".dat";
-  output::for_dilepton_rates.open(filename.str());
+  string filename(dir);
+  filename.append("/for_dilrates-"+to_string(timestep)+".dat");
+  output::for_dilepton_rates.open(filename);
+  output::for_dilepton_rates.precision(12);
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
       for (int ix = 0; ix < nx; ix++) {
@@ -1248,20 +1257,13 @@ void Fluid::output_for_dilepton_rates(const char *dir, int timestep,
         Cell *c = getCell(ix, iy, iz);
         getCMFvariables(c, tau, e, nb, nq, ns, vx, vy, vz);
         eos->eos(e, nb, nq, ns, T, mub, muq, mus, p);
+        if (e < 0.1 || T <= 0.05)
+          continue;
         lambda = fraction_QGP(e);
-        output::for_dilepton_rates << T << " " << mub << " " << muq << " " << mus << " " 
+        output::for_dilepton_rates << T << " " << mub << " " << muq << " " << mus << " "
                                    << vx << " " << vy << " " << vz << " " << lambda << endl;
       }
     }
   }
   output::for_dilepton_rates.close();
-}
-
-double fraction_QGP(double e) {
-  if (e > 1.0) {
-    return 1;
-  } else if (e >= 0.7) { //linearly from 0 to 1
-    return (e - 0.7)/(1.0 - 0.7);
-  }
-  return 0;
 }
