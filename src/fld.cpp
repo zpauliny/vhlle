@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 #include "inc.h"
 #include "rmn.h"
 #include "fld.h"
@@ -38,7 +39,7 @@ using namespace std;
 
 namespace output{  // a namespace containing all the output streams
   ofstream fkw, fkw_dim, fxvisc, fyvisc, fdiagvisc, fx,
-     fy, fdiag, fz, faniz, f2d, ffreeze;
+     fy, fdiag, fz, faniz, f2d, ffreeze, for_dilepton_rates;
 }
 
 // returns the velocities in cartesian coordinates, fireball rest frame.
@@ -1230,4 +1231,37 @@ void Fluid::addParticle(Particle _particle) {
       }
       getCell(ix,iy,iz)->addParticleSource(source);
  }
+}
+
+void Fluid::output_for_dilepton_rates(const char *dir, int timestep, 
+                                      double tau = 1) {
+  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
+  stringstream filename{dir};
+  filename << "/for_dilrates" << timestep << ".dat";
+  output::for_dilepton_rates.open(filename.str());
+  for (int iz = 0; iz < nz; iz++) {
+    for (int iy = 0; iy < ny; iy++) {
+      for (int ix = 0; ix < nx; ix++) {
+        double x = getX(ix);
+        double y = getY(iy);
+        double z = getZ(iz);
+        Cell *c = getCell(ix, iy, iz);
+        getCMFvariables(c, tau, e, nb, nq, ns, vx, vy, vz);
+        eos->eos(e, nb, nq, ns, T, mub, muq, mus, p);
+        lambda = fraction_QGP(e);
+        output::for_dilepton_rates << T << " " << mub << " " << muq << " " << mus << " " 
+                                   << vx << " " << vy << " " << vz << " " << lambda << endl;
+      }
+    }
+  }
+  output::for_dilepton_rates.close();
+}
+
+double fraction_QGP(double e) {
+  if (e > 1.0) {
+    return 1;
+  } else if (e >= 0.7) { //linearly from 0 to 1
+    return (e - 0.7)/(1.0 - 0.7);
+  }
+  return 0;
 }

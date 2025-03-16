@@ -527,7 +527,8 @@ int main(int argc, char **argv) {
   
   // output energy density at every 10th timestep
   if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb); 
-    
+  f->output_for_dilepton_rates(outputDir.c_str(), timestep);
+
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
    f = expandGrid2x(h, eos, eosH, trcoeff);
