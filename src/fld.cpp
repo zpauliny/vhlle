@@ -131,6 +131,11 @@ void Fluid::initOutput(const char *dir, double tau0, bool hsOnly) {
  string outfreeze = dir;
  outfreeze.append("/freezeout.dat");
  output::ffreeze.open(outfreeze.c_str());
+
+ string outdil = dir;
+ outdil.append("/for_dilrates.dat");
+ output::for_dilepton_rates.open(outdil.c_str());
+
  if (!hsOnly) {
   string outx = dir;
   outx.append("/outx.dat");
@@ -1244,9 +1249,6 @@ static inline double fraction_QGP(double e) {
 
 void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau) {
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
-  string filename(dir);
-  filename.append("/for_dilrates-"+to_string(timestep)+".dat");
-  output::for_dilepton_rates.open(filename);
   output::for_dilepton_rates.precision(12);
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
@@ -1260,10 +1262,9 @@ void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau)
         if (e < 0.1 || T <= 0.05)
           continue;
         lambda = fraction_QGP(e);
-        output::for_dilepton_rates << T << " " << mub << " " << muq << " " << mus << " "
+        output::for_dilepton_rates << timestep << " " << T << " " << mub << " " << muq << " " << mus << " "
                                    << vx << " " << vy << " " << vz << " " << lambda << endl;
       }
     }
   }
-  output::for_dilepton_rates.close();
 }
