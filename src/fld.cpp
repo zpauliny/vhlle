@@ -1247,6 +1247,10 @@ static inline double fraction_QGP(double e) {
   return 0;
 }
 
+static inline double partial_density(double  T, double	muB, double muQ, double muS) {
+  constexpr double hbarc = 0.197327;
+}
+
 void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau) {
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
   output::for_dilepton_rates.precision(12);

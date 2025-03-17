@@ -51,3 +51,20 @@ class Particle {
 
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
 };
+
+namespace particle_species {
+ struct ParticleType {
+  public:
+  int degeneracy;
+  int baryon_number;
+  int charge;
+  int strangeness;
+  double pole_mass;
+ };
+
+  const ParticleType nucleon{2,1,0,0,0.938};
+  const ParticleType Delta{4,1,0,0,1.232};
+  const ParticleType pion{3,0,0,0,0.139};
+  const ParticleType kaon{2,1,0,0.494};
+    
+} // namespace name
