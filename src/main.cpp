@@ -279,8 +279,8 @@ void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
  Cell *c;
  file_e << t << "\n";
  file_nb << t << "\n";
- for (int ix = 0; ix < f->getNX(); ix++) 
-   for (int iy = 0; iy < f->getNY(); iy++) 
+ for (int ix = 0; ix < f->getNX(); ix++)
+   for (int iy = 0; iy < f->getNY(); iy++)
     for (int iz = 0; iz < f->getNZ(); iz++) {
      c = f->getCell(ix, iy, iz);
  //    x = f->getX(ix);
@@ -288,7 +288,7 @@ void output_e_nb(double t, Fluid* f, ofstream& file_e, ofstream& file_nb) {
  //    z = f->getZ(iz);
      f->getCMFvariables(c, 1.0, e, nb, nq, ns, vx, vy, vz);
      file_e << e << " ";
-     file_nb << nb << " "; 
+     file_nb << nb << " ";
   }
   file_e << "\n";
   file_nb << "\n";
@@ -449,9 +449,9 @@ int main(int argc, char **argv) {
 
 
  bool resized = false; // flag if the grid has been resized
- 
+
  int timestep = 0;
- int nelements = 1;  
+ int nelements = 1;
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
@@ -472,11 +472,11 @@ int main(int argc, char **argv) {
    }
    h->setDtau(h->getDtau() * nSubSteps);
    cout << "timestep reduced by " << nSubSteps << endl;
-  } else 
+  } else
    h->performStep();
-   
+
   if (particles->size() > 0) h->addParticles(particles);
-  
+
   // freeze-out only after ftime and up until nelemens is 0
   if ((ctime > ftime) && (nelements>0))
    nelements = f->outputSurface(ctime);
@@ -509,8 +509,8 @@ int main(int argc, char **argv) {
         int pdg = particle_to_dump.getPdg();
         int id = 0;
         int charge = particle_to_dump.getQ();
-        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " << 
-                   p0 << " " << px << " " << py << " " << pz << " " << pdg << 
+        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " <<
+                   p0 << " " << px << " " << py << " " << pz << " " << pdg <<
                    " " << id << " " << charge << "\n";
         n_part += 1;
         particles->pop();
@@ -524,9 +524,9 @@ int main(int argc, char **argv) {
                  particles->empty() << "\n";
     break;
   }
-  
+
   // output energy density at every 10th timestep
-  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb); 
+  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
   f->output_for_dilepton_rates(outputDir.c_str(), timestep);
 
   if(ctime>=tauResize and resized==false) {
@@ -541,7 +541,7 @@ int main(int argc, char **argv) {
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
- 
+
  cout << "Is particle queue empty: " << particles->empty() << endl;
 
  delete f;

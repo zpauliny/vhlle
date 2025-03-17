@@ -14,10 +14,10 @@ class Particle {
      double scale;         // scaling factor for the case Nevents>1
      double calculateNorm(Fluid *f, double R);
                              // function to calculate the norm of the kernel
-         
+
     public:
      Particle();
-     Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
+     Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x,
       double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg);
      ~Particle(){};
      void setScale(double _scale) { scale = _scale; }
@@ -43,7 +43,7 @@ class Particle {
      inline double getX(void) const { return x; }
      inline double getY(void) const { return y; }
      inline double getZ(void) const { return z; }
-     
+
      inline double getE(void) { return e; }
      inline double getPx(void) { return px; }
      inline double getPy(void) { return py; }
@@ -52,7 +52,7 @@ class Particle {
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
 };
 
-namespace particle_species {
+namespace species {
  struct ParticleType {
   public:
   int degeneracy;
@@ -63,8 +63,7 @@ namespace particle_species {
  };
 
   const ParticleType nucleon{2,1,0,0,0.938};
-  const ParticleType Delta{4,1,0,0,1.232};
   const ParticleType pion{3,0,0,0,0.139};
-  const ParticleType kaon{2,1,0,0.494};
-    
+  const ParticleType kaon{2,0,0,1,0.494};
+
 } // namespace name

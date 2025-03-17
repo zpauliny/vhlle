@@ -1239,20 +1239,35 @@ void Fluid::addParticle(Particle _particle) {
 }
 
 static inline double fraction_QGP(double e) {
-  if (e > 1.0) {
+  constexpr double e_min = 0.7;
+  constexpr double e_max = 1.0;
+  if (e > e_max) {
     return 1;
-  } else if (e >= 0.7) { //linearly from 0 to 1
-    return (e - 0.7)/(1.0 - 0.7);
+  } else if (e >= e_min) { // linearly from 0 to 1
+    return (e - e_min)/(e_max - e_min);
   }
   return 0;
 }
 
-static inline double partial_density(double  T, double	muB, double muQ, double muS) {
+static inline double hadron_chemical_potential(double  T, double	muB,
+                                     double muQ, double muS,
+                                     const species::ParticleType& ptype) {
+  return muB*ptype.baryon_number + muQ*ptype.charge + muS*ptype.strangeness;
+}
+
+static inline double partial_density(double  T, double	muB,
+                                     double muQ, double muS,
+                                     const species::ParticleType& ptype) {
   constexpr double hbarc = 0.197327;
+  const double mass = ptype.pole_mass;
+  const double besselK2 = cyl_bessel_k(2, mass/T);
+  const double mu_tot = hadron_chemical_potential(T, muB, muQ, muS, ptype);
+  return ptype.degeneracy*mass*mass*T*exp(mu_tot/T)*besselK2/(2*M_PI*M_PI*pow(hbarc,3));
 }
 
 void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau) {
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
+  double nucleon_density, rhoN_eff;
   output::for_dilepton_rates.precision(12);
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
@@ -1266,8 +1281,12 @@ void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau)
         if (e < 0.1 || T <= 0.05)
           continue;
         lambda = fraction_QGP(e);
-        output::for_dilepton_rates << timestep << " " << T << " " << mub << " " << muq << " " << mus << " "
-                                   << vx << " " << vy << " " << vz << " " << lambda << endl;
+        nucleon_density = partial_density(T,mub,muq,mus,species::nucleon);
+        rhoN_eff = nucleon_density + 0.5*nb;
+        output::for_dilepton_rates << timestep << " " << T << " " << mub << " "
+                                   << muq << " " << mus << " " << lambda << " "
+                                   << rhoN_eff << " " << vx << " " << vy << " "
+                                   << vz << endl;
       }
     }
   }
