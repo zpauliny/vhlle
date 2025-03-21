@@ -478,7 +478,9 @@ int main(int argc, char **argv) {
   } else
    h->performStep();
 
-  if (particles->size() > 0) h->addParticles(particles);
+  if (particles->size() > 0) {
+    h->addParticles(particles);
+  }
 
   // freeze-out only after ftime and up until nelemens is 0
   if ((ctime > ftime) && (nelements>0)) {
@@ -535,8 +537,7 @@ int main(int argc, char **argv) {
 
   // output energy density at every 10th timestep
 //  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
-  if (for_dileptons) {
-    constexpr double dilepton_output_rate = 0.1; // every 0.1 fm
+  if (dilepton_output_rate>0) {
     static int dilcounter = 1;
     if (ctime > dilcounter*dilepton_output_rate) { 
       f->output_for_dilepton_rates(outputDir.c_str(), ctime);
