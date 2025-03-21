@@ -69,5 +69,5 @@ public:
  void InitialAnisotropies(double tau0);
 
  void addParticle(Particle _particle);
- void output_for_dilepton_rates(const char *dir, int timestep, double tau = 1);
+ void output_for_dilepton_rates(const char *dir, double t = 1);
 };

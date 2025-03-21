@@ -423,7 +423,7 @@ int main(int argc, char **argv) {
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
  //f->outputCorona(tau0);
 
- // initialize energy density output
+/* // initialize energy density output
  string outfile_e = outputDir.c_str();
  outfile_e.append("/energy_density.dat");
  ofstream file_e(outfile_e.c_str());
@@ -445,8 +445,7 @@ int main(int argc, char **argv) {
    ymin << " " << ymax << " " << etamin << " " <<
    etamax << "\n";
  file_nb << "# Nx, Ny, Nz: \n";
- file_nb << "# " << nx << " " << ny << " " << nz << "\n";
-
+ file_nb << "# " << nx << " " << ny << " " << nz << "\n"; */
 
  bool resized = false; // flag if the grid has been resized
 
@@ -526,8 +525,15 @@ int main(int argc, char **argv) {
   }
 
   // output energy density at every 10th timestep
-  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
-  f->output_for_dilepton_rates(outputDir.c_str(), timestep);
+//  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
+  if (for_dileptons) {
+    constexpr double dilepton_output_rate = 0.1; // every 0.1 fm
+    static int dilcounter = 1;
+    if (ctime > dilcounter*dilepton_output_rate) { 
+      f->output_for_dilepton_rates(outputDir.c_str(), ctime);
+      dilcounter++;
+    }
+  }
 
   if(ctime>=tauResize and resized==false) {
    cout << "grid resize\n";
@@ -549,6 +555,6 @@ int main(int argc, char **argv) {
  delete eos;
  delete eosH;
  delete particles;
- file_e.close();
- file_nb.close();
+// file_e.close();
+// file_nb.close();
 }

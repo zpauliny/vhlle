@@ -54,16 +54,15 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     iyc = round((y - ymin) / dy);
     izc = round((z - zmin) / dz);
 
-    const double range = 2.0;
+    const double smear_range = 2 * R;
+    nsmoothx = static_cast<int>(smear_range / dx);
+    nsmoothy = static_cast<int>(smear_range / dy);
+    nsmoothz = static_cast<int>(smear_range / dz);
 
-    nsmoothx = static_cast<int>(range * R / dx);
-    nsmoothy = static_cast<int>(range * R / dy);
-    nsmoothz = static_cast<int>(range * R / dz);
-
-    gauss_norm = calculateNorm(f,R);
+    gauss_norm = gaussianNorm(f,R);
 }
 
-double Particle::calculateNorm(Fluid *f, double R) {
+double Particle::gaussianNorm(Fluid *f, double R) {
    const int nx = f->getNX();
    const int ny = f->getNY();
    const int nz = f->getNZ();
@@ -83,7 +82,7 @@ double Particle::calculateNorm(Fluid *f, double R) {
    double norm = 0;
 
    for (int ix = ixc - nsmoothx; ix < ixc + nsmoothx + 1; ix++)
-    for (int iy = iyc - nsmoothy; iy < iyc + nsmoothy + 1; iy++)
+    for (int iy = iyc  - nsmoothy; iy < iyc + nsmoothy + 1; iy++)
      for (int iz = izc - nsmoothz; iz < izc + nsmoothz + 1; iz++)
       if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
 
@@ -103,12 +102,12 @@ double Particle::getWeight(double _xdiff, double _ydiff, double _zdiff) {
    const double m = sqrt(e * e - px * px - py * py - pz * pz);
    const double ux = px / m;
    const double uy = py / m;
-   const double uz = pz / m;
+   const double uz = pz / m; 
 
    const double rr = _xdiff * _xdiff + _ydiff * _ydiff + _zdiff * _zdiff;
    const double ru = _xdiff * ux + _ydiff * uy + _zdiff * uz;
-
-   return 1. / gauss_norm *
+      
+   return 1. / gauss_norm * 
                     exp((-rr - ru * ru) / R / R);
 }
 

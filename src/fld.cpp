@@ -1265,10 +1265,10 @@ static inline double partial_density(double  T, double	muB,
   return ptype.degeneracy*mass*mass*T*exp(mu_tot/T)*besselK2/(2*M_PI*M_PI*pow(hbarc,3));
 }
 
-void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau) {
+void Fluid::output_for_dilepton_rates(const char *dir, double tau) {
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, lambda;
   double nucleon_density, rhoN_eff;
-  output::for_dilepton_rates.precision(12);
+  output::for_dilepton_rates.precision(8);
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
       for (int ix = 0; ix < nx; ix++) {
@@ -1283,7 +1283,7 @@ void Fluid::output_for_dilepton_rates(const char *dir, int timestep, double tau)
         lambda = fraction_QGP(e);
         nucleon_density = partial_density(T,mub,muq,mus,species::nucleon);
         rhoN_eff = nucleon_density + 0.5*nb;
-        output::for_dilepton_rates << timestep << " " << T << " " << mub << " "
+        output::for_dilepton_rates << tau << " " << T << " " << mub << " "
                                    << muq << " " << mus << " " << lambda << " "
                                    << rhoN_eff << " " << vx << " " << vy << " "
                                    << vz << endl;

@@ -12,7 +12,7 @@ class Particle {
       nsmoothz;              // smoothly distribute to +- this many cells
      double gauss_norm;      // normalization of the smearing kernel
      double scale;         // scaling factor for the case Nevents>1
-     double calculateNorm(Fluid *f, double R);
+     double gaussianNorm(Fluid *f, double R);
                              // function to calculate the norm of the kernel
 
     public:
@@ -22,7 +22,14 @@ class Particle {
      ~Particle(){};
      void setScale(double _scale) { scale = _scale; }
      double getScale() { return scale; }
+
+     /**
+      * Weight of the particle at a given position in the fluid.
+      */
      double getWeight(int ix, int iy, int iz, Fluid *f, double R);
+     /**
+      * Weight of the particle at a distance from its position
+      */
      double getWeight(double _xdiff, double _ydiff, double _zdiff);
 
 
@@ -48,6 +55,7 @@ class Particle {
      inline double getPx(void) { return px; }
      inline double getPy(void) { return py; }
      inline double getPz(void) { return pz; }
+
 
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
 };
