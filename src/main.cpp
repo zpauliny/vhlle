@@ -80,6 +80,7 @@ double xmin {-5.0}, xmax {5.0}, ymin {-5.0}, ymax {5.0}, etamin {-5.0},
 string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
+bool corona_was_output {false};
 
 void setDefaultParameters() {
   // specifically for dynamical initialization, do not resize
@@ -421,7 +422,10 @@ int main(int argc, char **argv) {
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
- //f->outputCorona(tau0);
+ #ifndef CARTESIAN
+ f->outputCorona(tau0);
+ corona_was_output = true;
+ #endif
 
 /* // initialize energy density output
  string outfile_e = outputDir.c_str();
@@ -477,8 +481,13 @@ int main(int argc, char **argv) {
   if (particles->size() > 0) h->addParticles(particles);
 
   // freeze-out only after ftime and up until nelemens is 0
-  if ((ctime > ftime) && (nelements>0))
+  if ((ctime > ftime) && (nelements>0)) {
    nelements = f->outputSurface(ctime);
+   if (!corona_was_output) {
+    f->outputCorona(ctime);
+    corona_was_output = true;
+   }
+  }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
 
