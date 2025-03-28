@@ -70,5 +70,5 @@ public:
 
  void addParticle(Particle _particle);
  void output_for_dilepton_rates(const char *dir, double t = 1);
- void output_average_temperature(const char *dir, double t);
+ void output_average_temperature(double t);
 };

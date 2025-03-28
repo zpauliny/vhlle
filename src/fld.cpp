@@ -136,6 +136,10 @@ void Fluid::initOutput(const char *dir, double tau0, bool hsOnly) {
  outdil.append("/for_dilrates.dat");
  output::for_dilepton_rates.open(outdil.c_str());
 
+ string out_avgtemp = dir;
+ out_avgtemp.append("/average_temperature.dat");
+ output::avg_temp.open(out_avgtemp);
+
  if (!hsOnly) {
   string outx = dir;
   outx.append("/outx.dat");
@@ -1292,10 +1296,10 @@ void Fluid::output_for_dilepton_rates(const char *dir, double tau) {
   }
 }
 
-void Fluid::output_average_temperature(const char *dir, double t){
+void Fluid::output_average_temperature(double t){
   double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz;
-  double E_sum = 0, ET_sum = 0;
-  double E_sum_midrap = 0, ET_sum_midrap = 0;
+  double E_sum = 0, ET_sum = 0, smallest = 100, largest = 0;
+  double E_sum_midrap = 0, ET_sum_midrap = 0, smallest_midrap = 100, largest_midrap = 0;
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
       for (int ix = 0; ix < nx; ix++) {
@@ -1306,13 +1310,23 @@ void Fluid::output_average_temperature(const char *dir, double t){
         if (abs(std::atanh(z/t)) < 1.) {
           E_sum_midrap += e;
           ET_sum_midrap += e*T;
+          if (e>0.1 && T < smallest_midrap) 
+            smallest_midrap = T;
+          if (T > largest_midrap) 
+            largest_midrap = T;
         }
         E_sum += e;
         ET_sum += e*T;
+        if (e>0.1 &&  T < smallest) 
+          smallest = T;
+        if (T > largest) 
+          largest = T;
       }
     }
   }
   double ratio = E_sum > 0 ? ET_sum/E_sum : 0;
   double ratio_midrap = E_sum_midrap > 0 ? ET_sum_midrap/E_sum_midrap : 0;
-  output::avg_temp << t << " " << ratio << " " << ratio_midrap << std::endl;
+  output::avg_temp << t << " " << ratio << " " << ratio_midrap << " "
+                   << smallest << " " << largest << " "
+                   << smallest_midrap << " " << largest_midrap << " " << std::endl;
 }
