@@ -81,6 +81,7 @@ string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
 bool corona_was_output {false};
+double average_temperature_output_rate = 0;
 
 void setDefaultParameters() {
   // specifically for dynamical initialization, do not resize
@@ -542,6 +543,14 @@ int main(int argc, char **argv) {
     if (ctime > dilcounter*dilepton_output_rate) { 
       f->output_for_dilepton_rates(outputDir.c_str(), ctime);
       dilcounter++;
+    }
+  }
+
+  if (average_temperature_output_rate>0) {
+    static int avgtemp_counter = 1;
+    if (ctime > avgtemp_counter*average_temperature_output_rate) { 
+      f->output_average_temperature(outputDir.c_str(), ctime);
+      avgtemp_counter++;
     }
   }
 

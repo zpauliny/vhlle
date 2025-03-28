@@ -38,8 +38,8 @@
 using namespace std;
 
 namespace output{  // a namespace containing all the output streams
-  ofstream fkw, fkw_dim, fxvisc, fyvisc, fdiagvisc, fx,
-     fy, fdiag, fz, faniz, f2d, ffreeze, for_dilepton_rates;
+  ofstream fkw, fkw_dim, fxvisc, fyvisc, fdiagvisc, fx, fy, fdiag, fz, 
+  faniz, f2d, ffreeze, for_dilepton_rates, avg_temp;
 }
 
 // returns the velocities in cartesian coordinates, fireball rest frame.
@@ -1290,4 +1290,29 @@ void Fluid::output_for_dilepton_rates(const char *dir, double tau) {
       }
     }
   }
+}
+
+void Fluid::output_average_temperature(const char *dir, double t){
+  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz;
+  double E_sum = 0, ET_sum = 0;
+  double E_sum_midrap = 0, ET_sum_midrap = 0;
+  for (int iz = 0; iz < nz; iz++) {
+    for (int iy = 0; iy < ny; iy++) {
+      for (int ix = 0; ix < nx; ix++) {
+        double z = getZ(iz);
+        Cell *c = getCell(ix, iy, iz);
+        getCMFvariables(c, t, e, nb, nq, ns, vx, vy, vz);
+        eos->eos(e, nb, nq, ns, T, mub, muq, mus, p);
+        if (abs(std::atanh(z/t)) < 1.) {
+          E_sum_midrap += e;
+          ET_sum_midrap += e*T;
+        }
+        E_sum += e;
+        ET_sum += e*T;
+      }
+    }
+  }
+  double ratio = E_sum > 0 ? ET_sum/E_sum : 0;
+  double ratio_midrap = E_sum_midrap > 0 ? ET_sum_midrap/E_sum_midrap : 0;
+  output::avg_temp << t << " " << ratio << " " << ratio_midrap << std::endl;
 }
