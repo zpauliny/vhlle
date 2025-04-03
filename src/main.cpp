@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
   if (average_temperature_output_rate>0) {
     static int avgtemp_counter = 1;
     if (ctime > avgtemp_counter*average_temperature_output_rate) { 
-      f->output_average_temperature(ctime);
+      f->output_average_TmuB(ctime);
       avgtemp_counter++;
     }
   }

@@ -39,7 +39,7 @@ using namespace std;
 
 namespace output{  // a namespace containing all the output streams
   ofstream fkw, fkw_dim, fxvisc, fyvisc, fdiagvisc, fx, fy, fdiag, fz, 
-  faniz, f2d, ffreeze, for_dilepton_rates, avg_temp;
+  faniz, f2d, ffreeze, for_dilepton_rates, avg_temp, avg_muB;
 }
 
 // returns the velocities in cartesian coordinates, fireball rest frame.
@@ -139,6 +139,9 @@ void Fluid::initOutput(const char *dir, double tau0, bool hsOnly) {
  string out_avgtemp = dir;
  out_avgtemp.append("/average_temperature.dat");
  output::avg_temp.open(out_avgtemp);
+ string out_avgmuB = dir;
+ out_avgmuB.append("/average_muB.dat");
+ output::avg_muB.open(out_avgmuB);
 
  if (!hsOnly) {
   string outx = dir;
@@ -1296,37 +1299,65 @@ void Fluid::output_for_dilepton_rates(const char *dir, double tau) {
   }
 }
 
-void Fluid::output_average_temperature(double t){
-  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz;
-  double E_sum = 0, ET_sum = 0, smallest = 100, largest = 0;
-  double E_sum_midrap = 0, ET_sum_midrap = 0, smallest_midrap = 100, largest_midrap = 0;
+void Fluid::output_average_TmuB(double t){
+  double e, p, nb, nq, ns, T, muB, muq, mus, vx, vy, vz;
+  double E_sum = 0, ET_sum = 0, smallest_T = 100, largest_T = 0;
+  double EmuB_sum = 0, smallest_muB = 100, largest_muB = 0;
+  double E_sum_midrap = 0, ET_sum_midrap = 0, smallest_T_midrap = 100, largest_T_midrap = 0;
+  double  EmuB_sum_midrap = 0, smallest_muB_midrap = 100, largest_muB_midrap = 0;
+  double ET2_sum_midrap = 0, ET2_sum = 0, EmuB2_sum_midrap = 0, EmuB2_sum = 0;
   for (int iz = 0; iz < nz; iz++) {
     for (int iy = 0; iy < ny; iy++) {
       for (int ix = 0; ix < nx; ix++) {
         double z = getZ(iz);
         Cell *c = getCell(ix, iy, iz);
         getCMFvariables(c, t, e, nb, nq, ns, vx, vy, vz);
-        eos->eos(e, nb, nq, ns, T, mub, muq, mus, p);
-        if (abs(std::atanh(z/t)) < 1.) {
+        eos->eos(e, nb, nq, ns, T, muB, muq, mus, p);
+        if (abs(std::atanh(z/t)) < .5) {
           E_sum_midrap += e;
           ET_sum_midrap += e*T;
-          if (e>0.1 && T < smallest_midrap) 
-            smallest_midrap = T;
-          if (T > largest_midrap) 
-            largest_midrap = T;
+          ET2_sum_midrap += e*T*T;
+          EmuB_sum_midrap += e*muB;
+          EmuB2_sum_midrap += e*muB*muB;
+          if (T < smallest_T_midrap)
+            smallest_T_midrap = T;
+          if (T > largest_T_midrap) 
+            largest_T_midrap = T;
+          if (muB < smallest_muB_midrap)
+            smallest_muB_midrap = muB;
+          if (muB > largest_muB_midrap) 
+            largest_muB_midrap = muB;
         }
         E_sum += e;
         ET_sum += e*T;
-        if (e>0.1 &&  T < smallest) 
-          smallest = T;
-        if (T > largest) 
-          largest = T;
+        ET2_sum += e*T*T;
+        EmuB_sum += e*muB;
+        EmuB2_sum += e*muB*muB;
+        if (T < smallest_T) 
+          smallest_T = T;
+        if (T > largest_T) 
+          largest_T = T;
+        if (muB < smallest_muB) 
+          smallest_muB = muB;
+        if (muB > largest_muB) 
+          largest_muB = muB;
       }
     }
   }
-  double ratio = E_sum > 0 ? ET_sum/E_sum : 0;
-  double ratio_midrap = E_sum_midrap > 0 ? ET_sum_midrap/E_sum_midrap : 0;
-  output::avg_temp << t << " " << ratio << " " << ratio_midrap << " "
-                   << smallest << " " << largest << " "
-                   << smallest_midrap << " " << largest_midrap << " " << std::endl;
+  double ratio_T = E_sum > 0 ? ET_sum/E_sum : 0;
+  double ratio_T2 = E_sum > 0 ? ET2_sum/E_sum : 0;
+  double ratio_T_midrap = E_sum_midrap > 0 ? ET_sum_midrap/E_sum_midrap : 0;
+  double ratio_T2_midrap = E_sum_midrap > 0 ? ET2_sum_midrap/E_sum_midrap : 0;
+  double ratio_muB = E_sum > 0 ? EmuB_sum/E_sum : 0;
+  double ratio_muB2 = E_sum > 0 ? EmuB2_sum/E_sum : 0;
+  double ratio_muB_midrap = E_sum_midrap > 0 ? EmuB_sum_midrap/E_sum_midrap : 0;
+  double ratio_muB2_midrap = E_sum_midrap > 0 ? EmuB2_sum_midrap/E_sum_midrap : 0;
+  output::avg_temp << t << " " << ratio_T << " " << ratio_T_midrap << " "
+                   << smallest_T << " " << largest_T << " "
+                   << smallest_T_midrap << " " << largest_T_midrap << " " 
+                   << ratio_T2 << " " << ratio_T2_midrap << std::endl;
+  output::avg_muB << t << " " << ratio_muB << " " << ratio_muB_midrap << " "
+                   << smallest_muB << " " << largest_muB << " "
+                   << smallest_muB_midrap << " " << largest_muB_midrap << " " 
+                   << ratio_muB2 << " " << ratio_muB2_midrap << std::endl;
 }
