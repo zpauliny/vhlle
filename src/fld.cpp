@@ -39,7 +39,7 @@ using namespace std;
 
 namespace output{  // a namespace containing all the output streams
   ofstream fkw, fkw_dim, fxvisc, fyvisc, fdiagvisc, fx, fy, fdiag, fz, 
-  faniz, f2d, ffreeze, for_dilepton_rates, avg_temp, avg_muB;
+  faniz, f2d, ffreeze, for_dilepton_rates, avg_temp, avg_muB, energy;
 }
 
 // returns the velocities in cartesian coordinates, fireball rest frame.
@@ -142,6 +142,9 @@ void Fluid::initOutput(const char *dir, double tau0, bool hsOnly) {
  string out_avgmuB = dir;
  out_avgmuB.append("/average_muB.dat");
  output::avg_muB.open(out_avgmuB);
+ string out_energy = dir;
+ out_energy.append("/energy.dat");
+ output::energy.open(out_energy);
 
  if (!hsOnly) {
   string outx = dir;
@@ -823,6 +826,10 @@ int Fluid::outputSurface(double tau) {
       << setw(13) << nbTotSurfPos << endl; // trim output line << setw(13) << nbTotSurfNeg << endl;
  cout << setw(10) << "core " << setw(13) << tau << setw(13) << Ecore
       << setw(13) << Nbcore << setw(13) << Nb2 << endl;
+ output::energy << tau << " " << Ecore << " " << EtotSurfPos << " " 
+                << EtotSurfNeg << " " << E << " " << Nbcore << " " 
+                << nbTotSurfPos << " " << nbTotSurfNeg << " "
+                << Nb1 << " " << Nb2 << endl;
  //-- Cornelius: all done, let's free memory
  for (int i1 = 0; i1 < 2; i1++) {
   for (int i2 = 0; i2 < 2; i2++) {
