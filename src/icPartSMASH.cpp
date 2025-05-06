@@ -43,8 +43,9 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  T0x = new double**[nx];
  T0y = new double**[nx];
  T0z = new double**[nx];
- QB = new double**[nx];
+ QB = new double**[nx]; //unused in this IC
  QE = new double**[nx];
+ QS = new double**[nx]; //unused in this IC
  for (int ix = 0; ix < nx; ix++) {
   T00[ix] = new double*[ny];
   T0x[ix] = new double*[ny];
@@ -52,6 +53,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   T0z[ix] = new double*[ny];
   QB[ix] = new double*[ny];
   QE[ix] = new double*[ny];
+  QS[ix] = new double*[ny];
   for (int iy = 0; iy < ny; iy++) {
    T00[ix][iy] = new double[nz];
    T0x[ix][iy] = new double[nz];
@@ -59,6 +61,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    T0z[ix][iy] = new double[nz];
    QB[ix][iy] = new double[nz];
    QE[ix][iy] = new double[nz];
+   QS[ix][iy] = new double[nz];
    for (int iz = 0; iz < nz; iz++) {
     T00[ix][iy][iz] = 0.0;
     T0x[ix][iy][iz] = 0.0;
@@ -66,6 +69,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
     T0z[ix][iy][iz] = 0.0;
     QB[ix][iy][iz] = 0.0;
     QE[ix][iy][iz] = 0.0;
+    QS[ix][iy][iz] = 0.0;
    }
   }
  }
@@ -144,6 +148,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 // works only #ifdef CARTESIAN
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
                          queue<Particle>* particles) {
+ int Charge_val, Baryon_val, Strangeness_val;
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -168,6 +173,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  T0z = new double**[nx];
  QB = new double**[nx];
  QE = new double**[nx];
+ QS = new double**[nx];
  for (int ix = 0; ix < nx; ix++) {
   T00[ix] = new double*[ny];
   T0x[ix] = new double*[ny];
@@ -175,6 +181,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   T0z[ix] = new double*[ny];
   QB[ix] = new double*[ny];
   QE[ix] = new double*[ny];
+  QS[ix] = new double*[ny];
   for (int iy = 0; iy < ny; iy++) {
    T00[ix][iy] = new double[nz];
    T0x[ix][iy] = new double[nz];
@@ -182,6 +189,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    T0z[ix][iy] = new double[nz];
    QB[ix][iy] = new double[nz];
    QE[ix][iy] = new double[nz];
+   QS[ix][iy] = new double[nz];
    for (int iz = 0; iz < nz; iz++) {
     T00[ix][iy][iz] = 0.0;
     T0x[ix][iy][iz] = 0.0;
@@ -189,11 +197,11 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
     T0z[ix][iy][iz] = 0.0;
     QB[ix][iy][iz] = 0.0;
     QE[ix][iy][iz] = 0.0;
+    QS[ix][iy][iz] = 0.0;
    }
   }
  }
-
- //cout << "I am in the class \n";                          
+=                          
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
@@ -233,7 +241,6 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
     T_val, X_val, Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
     all_particles.push_back(particleIn);
     np++;
-    //cout << np << " " << particleIn.getT() << " " << particleIn.getE() << endl;
   }
   }
   else if (np > 0) {
@@ -267,6 +274,7 @@ IcPartSMASH::~IcPartSMASH() {
    delete[] T0z[ix][iy];
    delete[] QB[ix][iy];
    delete[] QE[ix][iy];
+   delete[] QS[ix][iy];
   }
   delete[] T00[ix];
   delete[] T0x[ix];
@@ -274,6 +282,7 @@ IcPartSMASH::~IcPartSMASH() {
   delete[] T0z[ix];
   delete[] QB[ix];
   delete[] QE[ix];
+  delete[] QS[ix];
  }
  delete[] T00;
  delete[] T0x;
@@ -281,6 +290,7 @@ IcPartSMASH::~IcPartSMASH() {
  delete[] T0z;
  delete[] QB;
  delete[] QE;
+ delete[] QS;
 }
 
 void IcPartSMASH::makeSmoothTable(int npart) {
@@ -358,7 +368,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
     Q[Z_] = T0z[ix][iy][iz] / nevents / dx / dy / dz / tau0;
     Q[NB_] = QB[ix][iy][iz] / nevents / dx / dy / dz / tau0;
     Q[NQ_] = QE[ix][iy][iz] / nevents / dx / dy / dz / tau0;
-    Q[NS_] = 0.0;
+    Q[NS_] = QS[ix][iy][iz] / nevents / dx / dy / dz / tau0;
     if (ix == nx / 2 && iy == ny / 2 && iz == nz / 2)
      std::cout << "IC SMASH, center: " << xmin + ix * dx << "  " << zmin + iz * dz
           << "  " << Q[T_] << "  " << Q[Z_] << endl;
@@ -395,7 +405,6 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
 // dynamical IC: set up IC with 1st particles, others stay in queue
 // works only #ifdef CARTESIAN
 void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* timeInit) {
- //double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
  double weight;
 
@@ -427,6 +436,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
       T0z[ix][iy][iz] += particleToSmooth.getPz() * weight * scale;
       QB[ix][iy][iz] += particleToSmooth.getB() * weight * scale;
       QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
+      QS[ix][iy][iz] += particleToSmooth.getS() * weight * scale;
  }
  
  particles->pop();
@@ -443,7 +453,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
     Q[Z_] = T0z[ix][iy][iz] / dx / dy / dz;
     Q[NB_] = QB[ix][iy][iz] / dx / dy / dz;
     Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
-    Q[NS_] = 0.0;
+    Q[NS_] = QS[ix][iy][iz] / dx / dy / dz;
     transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
 
     Cell* c = f->getCell(ix, iy, iz);

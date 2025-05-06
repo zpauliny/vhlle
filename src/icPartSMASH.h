@@ -10,7 +10,7 @@ private:
  int nx, ny, nz, nevents;
  double xmin, xmax, ymin, ymax, zmin, zmax;
  double dx, dy, dz;
- double ***T00, ***T0x, ***T0y, ***T0z, ***QB, ***QE;
+ double ***T00, ***T0x, ***T0y, ***T0z, ***QB, ***QE, ***QS;
  // auxiliary particle values for reading from file
  //#ifdef CARTESIAN 
  double T_val, Z_val, E_val, Pz_val, M_val;
@@ -24,7 +24,7 @@ private:
  //#else
  std::vector<double> Tau, X, Y, Eta, Mt, Px, Py, Rap;
  //#endif
- std::vector<int> Id, Charge;
+ std::vector<int> Id, Charge, Baryon, Strangeness;
 
  double tau0;
  double Rgx, Rgy, Rgz;
