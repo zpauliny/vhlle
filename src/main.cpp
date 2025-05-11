@@ -81,6 +81,7 @@ string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
 bool corona_was_output {false};
+double dilepton_output_rate = 0;
 double average_temperature_output_rate = 0;
 
 void setDefaultParameters() {
@@ -142,6 +143,8 @@ void readParameters(char *parFile) {
         {"freezeoutExtend", [](const string& value) { freezeoutExtend = atoi(value.c_str()); }},
         {"vorticity", [](const string& value) { vorticityOn = atoi(value.c_str()); }},
         {"smoothingType", [](const string& value) { smoothingType = atoi(value.c_str()); }},
+        {"dileptonOutRate", [](const string& value) { dilepton_output_rate = atof(value.c_str()); }},
+        {"avgTemperatureOutRate", [](const string& value) { average_temperature_output_rate = atof(value.c_str()); }},
     };
 
     while (fin.good()) {
@@ -540,7 +543,7 @@ int main(int argc, char **argv) {
 //  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
   if (dilepton_output_rate>0) {
     static int dilcounter = 1;
-    if (ctime > dilcounter*dilepton_output_rate) { 
+    if (ctime > dilcounter*dilepton_output_rate) {
       f->output_for_dilepton_rates(outputDir.c_str(), ctime);
       dilcounter++;
     }
@@ -548,7 +551,7 @@ int main(int argc, char **argv) {
 
   if (average_temperature_output_rate>0) {
     static int avgtemp_counter = 1;
-    if (ctime > avgtemp_counter*average_temperature_output_rate) { 
+    if (ctime > avgtemp_counter*average_temperature_output_rate) {
       f->output_average_TmuB(ctime);
       avgtemp_counter++;
     }

@@ -18,6 +18,7 @@ using namespace std;
 
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
                          double _tau0) {
+ double Charge_val = 0;
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -201,7 +202,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
    }
   }
  }
-=                          
+
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
