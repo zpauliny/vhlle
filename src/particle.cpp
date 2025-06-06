@@ -21,11 +21,13 @@ Particle::Particle(){
    px = 0.0;
    py = 0.0;
    pz = 0.0;
+
+   eventNo = 0;
    R = 0.0;
 }
 
 Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x,
-      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg){
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eventNo){
     B = _B;
     Q = _Q;
     S = _S;
@@ -40,6 +42,7 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     py = _py;
     pz = _pz;
 
+    eventNo = _eventNo;
     R = _R;
     scale = 1.0;
 

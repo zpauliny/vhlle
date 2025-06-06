@@ -89,3 +89,5 @@ public:
  void setIC(Fluid *f, EoS *eos);
  void setIC(Fluid *f, EoS *eos, std::queue<Particle>* particles, double* ctime);
 };
+
+void outputCoronaParticles(std::queue<Particle>* particles, std::string outputDir);

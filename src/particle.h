@@ -7,6 +7,7 @@ class Particle {
      double e, px, py, pz;   // particle momentum
      int pdg;                // pdg code
      int ixc, iyc, izc;      // cell coordinates of the particle
+     int eventNo;           // event number: important for averaged IC
      double R;               // sigma of the gaussian
      int nsmoothx, nsmoothy,
       nsmoothz;              // smoothly distribute to +- this many cells
@@ -17,8 +18,8 @@ class Particle {
 
     public:
      Particle();
-     Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x,
-      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg);
+     Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x, 
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eventNo);
      ~Particle(){};
      void setScale(double _scale) { scale = _scale; }
      double getScale() { return scale; }
@@ -31,7 +32,6 @@ class Particle {
       * Weight of the particle at a distance from its position
       */
      double getWeight(double _xdiff, double _ydiff, double _zdiff);
-
 
      inline int getIxc(void) { return ixc; }
      inline int getIyc(void) { return iyc; }
@@ -58,6 +58,7 @@ class Particle {
 
 
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
+     inline int getEventNo(void) const { return eventNo; }
 };
 
 namespace species {

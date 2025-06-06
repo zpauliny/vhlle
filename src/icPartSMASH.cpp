@@ -240,7 +240,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _gaussian_sigma,
 
   if(abs(Id_val)>100) { // exclude photons, W and Z bosons and Higgs
     Particle particleIn(f, Rgz, Baryon_val, Charge_val, Strangeness_val,
-    T_val, X_val, Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val);
+    T_val, X_val, Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val, nevents-1);
     all_particles.push_back(particleIn);
     np++;
   }
@@ -464,4 +464,68 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, queue<Particle>* particles, double* 
     if (e > 0.) c->setAllM(1.);
  }
  // fluid initialized + particles queue awaits
+}
+
+// dynamical IC: set up IC with 1st particles, others stay in queue
+// works only #ifdef CARTESIAN
+void outputCoronaParticles(std::queue<Particle>* particles, std::string outputDir) 
+{
+ // sort particles by event number
+  std::vector<Particle> tempVec;
+    while (!particles->empty()) {
+        tempVec.push_back(particles->front());
+        particles->pop();
+    }
+  std::sort(tempVec.begin(), tempVec.end(),
+   [](const Particle &a, const Particle &b) -> bool { return a.getEventNo() < b.getEventNo(); }); 
+  for (const auto& item : tempVec) {
+        particles->push(item);
+    }
+
+ 
+  int particle_number = particles->size();
+  int n_part = 0;
+  int n_event = 0;
+    
+    if (particle_number > 0) {
+      string filename = outputDir.c_str();
+      filename.append("/particle_lists.oscar");
+      ofstream outfile(filename.c_str());
+      outfile << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge \n";
+      outfile << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e \n";
+      outfile << "# event " <<  n_event << " out\n";
+      while (particle_number > 0)
+      {
+        Particle particle_to_dump = particles->front();
+        double t = particle_to_dump.getT();
+        double x = particle_to_dump.getX();
+        double y = particle_to_dump.getY();
+        double z = particle_to_dump.getZ();
+        double mass = particle_to_dump.getM();
+        double p0 = particle_to_dump.getE();
+        double px = particle_to_dump.getPx();
+        double py = particle_to_dump.getPy();
+        double pz = particle_to_dump.getPz();
+        int pdg = particle_to_dump.getPdg();
+        int id = 0;
+        int charge = particle_to_dump.getQ();
+        while (particle_to_dump.getEventNo() > n_event)
+        {
+          outfile << "# event " <<  n_event << " end\n";
+          n_event++;
+          outfile << "# event " <<  n_event << " out\n"; 
+        }
+        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " << 
+                    p0 << " " << px << " " << py << " " << pz << " " << pdg << 
+                    " " << id << " " << charge << "\n";
+        n_part += 1;
+        particles->pop();
+        particle_number = particles->size();
+      }
+      outfile << "# event " <<  n_event << " end\n";
+    }
+    // check-in about the procedure
+    std::cout << n_part << " particles were left after hydro evolution.\n" <<
+                 "At the end of the run, particle queue is empty: " <<
+                 particles->empty() << "\n";
 }

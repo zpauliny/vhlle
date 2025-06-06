@@ -348,7 +348,7 @@ int main(int argc, char **argv) {
  } else if (eosTypeHadron == 1) {
    eosH = new EoSSmash((char*)"eos/hadgas_eos_SMASH.dat", 101, 51, 51); //SMASH hadronic EoS
  } else {
-   cout << "Unknown haronic EoS type for hypersurface creation.\n" <<
+   cout << "Unknown hadronic EoS type for hypersurface creation.\n" <<
            "eosTypeHadron should be either \"0\" (PDG hadronic EoS) or " <<
            "\"1\" (SMASH hadronic EoS).\n";
    return 0;
@@ -420,9 +420,11 @@ int main(int argc, char **argv) {
  h = new Hydro(f, eos, trcoeff, *timeInit, dtau);
  ctime = h->time();
  cout << "Hydro starting at " << ctime << endl;
+ // TODO: specific for DI, not all cartesian
  double ftime = ctime + 1.0;  // start hypersurface calculation 1 fm/c after the start
  #else
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
+ double ftime = 0.;
  #endif
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
@@ -431,30 +433,6 @@ int main(int argc, char **argv) {
  f->outputCorona(tau0);
  corona_was_output = true;
  #endif
-
-/* // initialize energy density output
- string outfile_e = outputDir.c_str();
- outfile_e.append("/energy_density.dat");
- ofstream file_e(outfile_e.c_str());
- file_e << "# block at t, energy_density: iterating over z, y, x \n";
- file_e << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
- file_e << "# " << xmin << " " << xmax << " " <<
-   ymin << " " << ymax << " " << etamin << " " <<
-   etamax << "\n";
- file_e << "# Nx, Ny, Nz: \n";
- file_e << "# " << nx << " " << ny << " " << nz << "\n";
-
- // initialize baryon number density output
- string outfile_nb = outputDir.c_str();
- outfile_nb.append("/baryon_number.dat");
- ofstream file_nb(outfile_nb.c_str());
- file_nb << "# block at t, energy_density: iterating over z, y, x \n";
- file_nb << "# grid: xmin, xmax, ymin, ymax, zmin, zmax: " << "\n";
- file_nb << "# " << xmin << " " << xmax << " " <<
-   ymin << " " << ymax << " " << etamin << " " <<
-   etamax << "\n";
- file_nb << "# Nx, Ny, Nz: \n";
- file_nb << "# " << nx << " " << ny << " " << nz << "\n"; */
 
  bool resized = false; // flag if the grid has been resized
 
@@ -489,57 +467,21 @@ int main(int argc, char **argv) {
 
   // freeze-out only after ftime and up until nelemens is 0
   if ((ctime > ftime) && (nelements>0)) {
-   nelements = f->outputSurface(ctime);
-   if (!corona_was_output) {
-    f->outputCorona(ctime);
-    corona_was_output = true;
-   }
+    nelements = f->outputSurface(ctime);
+    if (!corona_was_output) {
+      f->outputCorona(ctime);
+      corona_was_output = true;
+    }
   }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
-
-  // when nelements is 0: print out the particles still in the queue
-  // file an smash oscar format
-  if (nelements == 0) {
-    int particle_number = particles->size();
-    int n_part = 0;
-    if (particle_number > 0) {
-      string filename = outputDir.c_str();
-      filename.append("/particle_lists.oscar");
-      ofstream outfile(filename.c_str());
-      outfile << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge \n";
-      outfile << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e \n";
-      while (particle_number > 0)
-      {
-        Particle particle_to_dump = particles->front();
-        double t = particle_to_dump.getT();
-        double x = particle_to_dump.getX();
-        double y = particle_to_dump.getY();
-        double z = particle_to_dump.getZ();
-        double mass = particle_to_dump.getM();
-        double p0 = particle_to_dump.getE();
-        double px = particle_to_dump.getPx();
-        double py = particle_to_dump.getPy();
-        double pz = particle_to_dump.getPz();
-        int pdg = particle_to_dump.getPdg();
-        int id = 0;
-        int charge = particle_to_dump.getQ();
-        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " <<
-                   p0 << " " << px << " " << py << " " << pz << " " << pdg <<
-                   " " << id << " " << charge << "\n";
-        n_part += 1;
-        particles->pop();
-        particle_number = particles->size();
-      }
-    }
-    nelements = -1;
-    // check-in about the procedure
-    std::cout << n_part << " particles were left after hydro evolution, " <<
-                 "nelements = " << nelements << ", particle queue is empty: " <<
-                 particles->empty() << "\n";
+  if (nelements == 0)
+  {
+    outputCoronaParticles(particles, outputDir);
     break;
   }
 
+  // TODO: only for DIvoid outputCoronaParticles(queue<Particle>* particles, bool* exit_ready)
   // output energy density at every 10th timestep
 //  if (timestep%10 == 0) output_e_nb(ctime, f, file_e, file_nb);
   if (dilepton_output_rate>0) {
