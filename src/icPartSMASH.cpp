@@ -147,7 +147,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
 // dynamical IC: set up queue of particles
 // works only #ifdef CARTESIAN
-IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
+IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _gaussian_sigma,
                          queue<Particle>* particles) {
  int Charge_val, Baryon_val, Strangeness_val;
  nx = f->getNX();
@@ -158,7 +158,8 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  dy = f->getDy();
  dz = f->getDz();
 
- Rgz = _Rgz;
+ // To match parameters with the smearing kernel defined in SMASH
+ Rgz = sqrt(2)*_gaussian_sigma;
 
  // helper variables for read-out
  double x1, x2, x3, x4, x5, x6, x7;
