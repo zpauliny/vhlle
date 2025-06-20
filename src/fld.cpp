@@ -1097,3 +1097,33 @@ void Fluid::CheckEoSPhysicality(double tau){
  cout << "Lowest e/nB="<<lowest<< " in cell with "<<100.0*lowQ0*Ntot/Etot <<"% of mean energy, highest e/nB="<<highest<< " in cell with "<<100.0*highQ0*Ntot/Etot <<"% of mean energy, N average e/nB="<<avgNnum/Ntot<<"(±"<<sqrt(avgNnumsq/Ntot-avgNnum*avgNnum/Ntot/Ntot)<<"), E average e/nB="<<avgEnum/Etot<<"(±"<<sqrt(avgEnumsq/Etot-avgEnum*avgEnum/Etot/Etot)<<")"<<endl;
    cout <<endl;
 }
+
+
+void Fluid::computeTotals(double tau, double &E, double &Nb1, double &Nb2) {
+ double e, p, nb, nq, ns, t, mub, muq, mus, vx, vy, vz, Q[7];
+ E = 0.;
+ Nb1 = 0.;
+ Nb2 = 0.;
+ double eta = 0;
+ for (int ix = 2; ix < nx - 2; ix++)
+  for (int iy = 2; iy < ny - 2; iy++)
+   for (int iz = 2; iz < nz - 2; iz++) {
+    Cell *c = getCell(ix, iy, iz);
+    getCMFvariables(c, tau, e, nb, nq, ns, vx, vy, vz);
+    c->getQ(Q);
+    eos->eos(e, nb, nq, ns, t, mub, muq, mus, p);
+    double s = eos->s(e, nb, nq, ns);
+    eta = getZ(iz);
+    const double cosh_int = (sinh(eta + 0.5 * dz) - sinh(eta - 0.5 * dz)) / dz;
+    const double sinh_int = (cosh(eta + 0.5 * dz) - cosh(eta - 0.5 * dz)) / dz;
+    E += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+             (cosh_int - tanh(vz) * sinh_int) -
+         tau * p * cosh_int;
+    Nb1 += Q[NB_];
+    Nb2 += tau * nb * (cosh_int - tanh(vz) * sinh_int) /
+           sqrt(1. - vx * vx - vy * vy - tanh(vz) * tanh(vz));
+   }
+ E = E * dx * dy * dz;
+ Nb1 *= dx * dy * dz;
+ Nb2 *= dx * dy * dz;
+}

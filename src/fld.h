@@ -73,4 +73,5 @@ public:
  void outputCorona(double tau);
  void InitialAnisotropies(double tau0);
  void CheckEoSPhysicality(double tau);
+ void computeTotals(double tau, double &E, double &Nb1, double &Nb2);
 };

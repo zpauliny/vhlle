@@ -484,9 +484,9 @@ if(adaptiveTimestep==1){
  f_t->initOutput(outputDir.c_str(), tau0, "targ");
  f_f->initOutput(outputDir.c_str(), tau0, "fire");
  mh->initOutput(outputDir.c_str());
- f_p->outputCorona(tau0);
- f_t->outputCorona(tau0);
- f_f->outputCorona(tau0);
+ //f_p->outputCorona(tau0);
+ //f_t->outputCorona(tau0);
+ //f_f->outputCorona(tau0);
  mh->getEnergyDensity();
 
  f_p->CheckEoSPhysicality(h_p->getTau());

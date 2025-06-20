@@ -21,6 +21,9 @@ class TGraph;
 class EoS {
 public:
  virtual ~EoS() {}
+ // I commented out the following functions, because if used, the need to be implemented in all EoS classes
+ //virtual double emin(double nb) = 0; // minimum energy density for given nb where the EoS is robust
+ //virtual double emax(double nb) = 0; // maximum tabulated energy density for given nb
  // eos() gets all EoS relations together:
  // {p,T,mu_b,mu_q,mu_s}={p,T,mu_b,mu_q,mu_s}(e,n_b,n_q,n_s)
  virtual void eos(double e, double nb, double nq, double ns, double &T,

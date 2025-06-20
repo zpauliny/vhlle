@@ -937,6 +937,15 @@ void MultiHydro::frictionSubstep()
   formationTime -= dtau * dtauf;
   if (formationTime < 0) formationTime = 0;
  }
+ //================ checking total energies
+ double Ep, Et, Ef, Nb1p, Nb1t, Nb1f, Nb2p, Nb2t, Nb2f;
+ f_p->computeTotals(h_p->getTau(), Ep, Nb1p, Nb2p);
+ f_t->computeTotals(h_t->getTau(), Et, Nb1t, Nb2t);
+ f_f->computeTotals(h_f->getTau(), Ef, Nb1f, Nb2f);
+ cout << setw(23) << "TOTAL ENERGY,Nb1,Nb2: " << setw(14) << Ep+Et+Ef << setw(14) << Nb1p+Nb1t+Nb1f << setw(14) << Nb2p+Nb2t+Nb2f << endl;
+ cout << setw(23) << "p part: " << setw(14) << Ep << setw(14) << Nb1p << setw(14) << Nb2p << endl;
+ cout << setw(23) << "t part: " << setw(14) << Et << setw(14) << Nb1t << setw(14) << Nb2t << endl;
+ cout << setw(23) << "f part: " << setw(14) << Ef << setw(14) << Nb1f << setw(14) << Nb2f << endl;
 }
 
 void MultiHydro::addRetardedFriction(double flux, double x, double y, double z, double t, int i)
@@ -1200,9 +1209,12 @@ int MultiHydro::findFreezeout(EoS* eosH)
  updateEnergyDensity();
  getEnergyDensity();
  swap(eos, eosH);
+ const double tinyT = 1e-10; // a tiny value to safely compare T>tinyT instead of T>0.0
  int nelements = 0;
  int ne_pos = 0;
  double E=0., Efull = 0.;
+ static double Etot_to_sampler[3] = {0., 0., 0.}, Nbtot_to_sampler[3] = {0., 0., 0.};
+ static double E_dilute = 0., Nb_dilute = 0.;
 
  // allocating corner points for Cornelius
  double ****ccube = new double ***[2];
@@ -1322,9 +1334,27 @@ int MultiHydro::findFreezeout(EoS* eosH)
      double TCp, mubCp, muqCp, musCp, pCp;
      double TCt, mubCt, muqCt, musCt, pCt;
      double TCf, mubCf, muqCf, musCf, pCf;
-     eos->eos(ep, nbp, nqp, nsp, TCp, mubCp, muqCp, musCp, pCp);
-     eos->eos(et, nbt, nqt, nst, TCt, mubCt, muqCt, musCt, pCt);
-     eos->eos(ef, nbf, nqf, nsf, TCf, mubCf, muqCf, musCf, pCf);
+     eos->eos(ep, nbp, 0.4*nbp, nsp, TCp, mubCp, muqCp, musCp, pCp);
+     eos->eos(et, nbt, 0.4*nbt, nst, TCt, mubCt, muqCt, musCt, pCt);
+     eos->eos(ef, nbf, 0.4*nbf, nsf, TCf, mubCf, muqCf, musCf, pCf);
+     /*int neosfix = 0; // counter to prevent infinite loop while correcting the densities
+     while(TCp<=0. && neosfix<10) {
+       ep = ep * 1.05;
+       eos->eos(ep, nbp, 0.4*nbp, nsp, TCp, mubCp, muqCp, musCp, pCp);
+       neosfix++;
+     }
+     neosfix = 0;
+     while(TCt<=0. && neosfix<10) {
+       et = et * 1.05;
+       eos->eos(et, nbt, 0.4*nbt, nst, TCt, mubCt, muqCt, musCt, pCt);
+       neosfix++;
+     }
+     neosfix = 0;
+     while(TCf <=0. && neosfix<10) {
+       ef = ef * 1.05;
+       eos->eos(ef, nbf, 0.4*nbf, nsf, TCf, mubCf, muqCf, musCf, pCf);
+       neosfix++;
+     } */
      /*if (TC > 0.4 || abs(mubC) > 0.85) {
       cout << "#### Error (multifluid surface): high T/mu_b (T=" << TC << "/mu_b=" << mubC << ") ####\n";
      }*/
@@ -1442,10 +1472,13 @@ int MultiHydro::findFreezeout(EoS* eosH)
                                       2. * sh * ch * piC_f[index44(0, 3)];
 #endif
 
-     double dEtotSurf[3] = {0., 0., 0.};
+     double dEtotSurf[3] = {0., 0., 0.}, dNbsurf[3] = {0., 0., 0.};
      dEtotSurf[0] = (ep + pCp) * uC_p[0] * dVEff_p - pCp * dsigma[0]; // projectile
      dEtotSurf[1] = (et + pCt) * uC_t[0] * dVEff_t - pCt * dsigma[0]; // target
      dEtotSurf[2] = (ef + pCf) * uC_f[0] * dVEff_f - pCf * dsigma[0]; // fireball
+     dNbsurf[0] = nbp * dVEff_p;
+     dNbsurf[1] = nbt * dVEff_t;
+     dNbsurf[2] = nbf * dVEff_f;
      EtotSurf[0] += dEtotSurf[0];
      EtotSurf[1] += dEtotSurf[1];
      EtotSurf[2] += dEtotSurf[2];
@@ -1459,65 +1492,110 @@ int MultiHydro::findFreezeout(EoS* eosH)
      // exclude segments which fulfills dSigma_0 < 0 & dSigma^2 > 0 - those cells have energy flow into >
      if (dsds > 0) {
       if (dsigma[0] > 0) {
-       printFreezeout(
+       if(TCp > tinyT) {
+        Etot_to_sampler[0] += dEtotSurf[0];  // projectile
+        Nbtot_to_sampler[0] += dNbsurf[0];  // projectile
+        printFreezeout(
+         fmhfreeze_p,
+         h_p->getTau() - h_p->getDtau() + cornelius->get_centroid_elem(isegm, 0),
+         f_p->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
+         f_p->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
+         f_p->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
+         dsigma, uC_p, TCp, mubCp, muqCp, musCp, picart_p, PiC_p, dVEff_p);
+       } else {
+        E_dilute += dEtotSurf[0];
+        Nb_dilute += dNbsurf[0];
+       }
+       if(TCt > tinyT) {
+        Etot_to_sampler[1] += dEtotSurf[1];  // target
+        Nbtot_to_sampler[1] += dNbsurf[1];  // target
+        printFreezeout(
+         fmhfreeze_t,
+         h_t->getTau() - h_t->getDtau() + cornelius->get_centroid_elem(isegm, 0),
+         f_t->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
+         f_t->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
+         f_t->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
+         dsigma, uC_t, TCt, mubCt, muqCt, musCt, picart_t, PiC_t, dVEff_t);
+       } else {
+        E_dilute += dEtotSurf[1];
+        Nb_dilute += dNbsurf[1];
+       }
+       if(TCf > tinyT) {
+        Etot_to_sampler[2] += dEtotSurf[2];  // fireball
+        Nbtot_to_sampler[2] += dNbsurf[2];  // fireball
+        printFreezeout(
+         fmhfreeze_f,
+         h_f->getTau() - h_f->getDtau() + cornelius->get_centroid_elem(isegm, 0),
+         f_f->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
+         f_f->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
+         f_f->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
+         dsigma, uC_f, TCf, mubCf, muqCf, musCf, picart_f, PiC_f, dVEff_f);
+       } else {
+        E_dilute += dEtotSurf[2];
+        Nb_dilute += dNbsurf[2];
+       }
+      }
+     } else {
+      if (dEtotSurf[0] > 0 && dVEff_p > 0) {
+       if(TCp > tinyT) {
+        Etot_to_sampler[0] += dEtotSurf[0];
+        Nbtot_to_sampler[0] += dNbsurf[0];
+        printFreezeout(
         fmhfreeze_p,
         h_p->getTau() - h_p->getDtau() + cornelius->get_centroid_elem(isegm, 0),
         f_p->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
         f_p->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
         f_p->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-        dsigma, uC_p, TCp, mubCp, muqCp, musCp, picart_p, PiC_p, dVEff_p
-       );
-       printFreezeout(
+        dsigma, uC_p, TCp, mubCp, muqCp, musCp, picart_p, PiC_p, dVEff_p);
+       } else {
+        E_dilute += dEtotSurf[0];
+        Nb_dilute += dNbsurf[0];
+       }
+      }
+      if (dEtotSurf[1] > 0 && dVEff_t > 0) {
+       if(TCt > tinyT) {
+        Etot_to_sampler[1] += dEtotSurf[1];
+        Nbtot_to_sampler[1] += dNbsurf[1];
+        printFreezeout(
         fmhfreeze_t,
         h_t->getTau() - h_t->getDtau() + cornelius->get_centroid_elem(isegm, 0),
         f_t->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
         f_t->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
         f_t->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-        dsigma, uC_t, TCt, mubCt, muqCt, musCt, picart_t, PiC_t, dVEff_t
-       );
-       printFreezeout(
+        dsigma, uC_t, TCt, mubCt, muqCt, musCt, picart_t, PiC_t, dVEff_t);
+       } else {
+        E_dilute += dEtotSurf[1];
+        Nb_dilute += dNbsurf[1];
+       }
+      }
+      if (dEtotSurf[2] > 0 && dVEff_f > 0){
+       if(TCf > tinyT) {
+        Etot_to_sampler[2] += dEtotSurf[2];
+        Nbtot_to_sampler[2] += dNbsurf[2];
+        printFreezeout(
         fmhfreeze_f,
         h_f->getTau() - h_f->getDtau() + cornelius->get_centroid_elem(isegm, 0),
         f_f->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
         f_f->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
         f_f->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-        dsigma, uC_f, TCf, mubCf, muqCf, musCf, picart_f, PiC_f, dVEff_f
-       );
+        dsigma, uC_f, TCf, mubCf, muqCf, musCf, picart_f, PiC_f, dVEff_f);
+       } else {
+        E_dilute += dEtotSurf[2];
+        Nb_dilute += dNbsurf[2];
+       }
       }
-     } else {
-      if (dEtotSurf[0] > 0 && dVEff_p > 0) printFreezeout(
-       fmhfreeze_p,
-       h_p->getTau() - h_p->getDtau() + cornelius->get_centroid_elem(isegm, 0),
-       f_p->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
-       f_p->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
-       f_p->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-       dsigma, uC_p, TCp, mubCp, muqCp, musCp, picart_p, PiC_p, dVEff_p
-      );
-      if (dEtotSurf[1] > 0 && dVEff_t > 0) printFreezeout(
-       fmhfreeze_t,
-       h_t->getTau() - h_t->getDtau() + cornelius->get_centroid_elem(isegm, 0),
-       f_t->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
-       f_t->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
-       f_t->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-       dsigma, uC_t, TCt, mubCt, muqCt, musCt, picart_t, PiC_t, dVEff_t
-      );
-      if (dEtotSurf[2] > 0 && dVEff_f > 0) printFreezeout(
-       fmhfreeze_f,
-       h_f->getTau() - h_f->getDtau() + cornelius->get_centroid_elem(isegm, 0),
-       f_f->getX(ix) + cornelius->get_centroid_elem(isegm, 1),
-       f_f->getY(iy) + cornelius->get_centroid_elem(isegm, 2),
-       f_f->getZ(iz) + cornelius->get_centroid_elem(isegm, 3),
-       dsigma, uC_f, TCf, mubCf, muqCf, musCf, picart_f, PiC_f, dVEff_f
-      );
-     }
-
-    }
- }
+     } // other cases when surface elements are retained for hadron sampling
+    } // loop over segments from Cornelius
+ } // the outer loop over fluid cells
 
  cout << setw(10) << h_p->getTau() << setw(10) << nelements << "\t" << ne_pos << "\t"
       << EtotSurf[0] << "\t" << EtotSurf_positive[0] << "\t" << EtotSurf_negative[0] << "\t"
       << EtotSurf[1] << "\t" << EtotSurf_positive[1] << "\t" << EtotSurf_negative[1] << "\t"
       << EtotSurf[2] << "\t" << EtotSurf_positive[2] << "\t" << EtotSurf_negative[2] << endl;
+ cout << "flow through recorded surface elements (Etot[p,t,f,SUM], Nbtot[p,t,f,SUM]):  \n";
+ cout << setw(14) << Etot_to_sampler[0] << setw(14) << Etot_to_sampler[1] << setw(14) << Etot_to_sampler[2] << setw(14) << Etot_to_sampler[0] + Etot_to_sampler[1] + Etot_to_sampler[2] << endl;
+ cout << setw(14) << Nbtot_to_sampler[0] << setw(14) << Nbtot_to_sampler[1] << setw(14) << Nbtot_to_sampler[2] << setw(14) << Nbtot_to_sampler[0] + Nbtot_to_sampler[1] + Nbtot_to_sampler[2] << endl;
+ cout << "Dilute patches contain (Etot, Nbtot):  " << E_dilute << "  " << Nb_dilute << endl;
  swap(eos, eosH); // get back to the hydrodynamic EoS
  for (int i1 = 0; i1 < 2; i1++) {
   for (int i2 = 0; i2 < 2; i2++) {
