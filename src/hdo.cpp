@@ -721,7 +721,8 @@ void Hydro::ISformal() {
         for (int l = 0; l < 4; l++){
          c->addpiH0(i, j, (-c->getpi(i, k) * u[j] - c->getpi(j, k) * u[i]) * u[l] * dmu[l][k] * gmumu[k] / gamma * 0.5 * dt
           - 1. / 3. * Delta[index44(i,j)] * c->getpi(k, l) * ( phi7 * c->getpi(k, l) - taupipi * sigNS[k][l]) * gmumu[k] * gmumu[l] / gamma * 0.5 * dt);
-         c->addPiH0(lamPipi * c->getpi(k, l) * sigNS[k][l] / gamma * 0.5 * dt);
+         // in this loop over (i,j), c->addPiH0() is called 10 times instead of 1, therefore 0.1 scaling is added.
+         c->addPiH0(0.1 * lamPipi * c->getpi(k, l) * sigNS[k][l] * gmumu[k] * gmumu[l] / gamma * 0.5 * dt);
         }
        }
       }
@@ -771,7 +772,8 @@ void Hydro::ISformal() {
         for (int l = 0; l < 4; l++){
          c->addpi0(i, j, ((-c->getpiH0(i, k) * u[j] - c->getpiH0(j, k) * u[i]) * u[l] * dmu[l][k] * gmumu[k]
           - 1. / 3. * Delta[index44(i,j)] * c->getpiH0(k, l) * ( phi7 * c->getpiH0(k, l) - taupipi * sigNS[k][l]) * gmumu[k] * gmumu[l]) / gamma * dt);
-         c->addPi0(lamPipi * c->getpiH0(k, l) * sigNS[k][l] / gamma * dt);
+         // in this loop over (i,j), c->addPi0() is called 10 times instead of 1, therefore 0.1 scaling is added.
+         c->addPi0(0.1 * lamPipi * c->getpiH0(k, l) * sigNS[k][l] * gmumu[k] * gmumu[l] / gamma * dt);
         }
        }
       }
