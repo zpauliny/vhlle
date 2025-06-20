@@ -445,7 +445,7 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
   dmu[0][2] = (uy1 - uy0) / dt;
  if (fabs(uuu[3]) < VMIN || fabs(0.5 * (uz1 + uz0) / uz1) > UDIFF)
   dmu[0][3] = (uz1 - uz0) / dt;
- if (e1 <= 0. || e0 <= 0.) {  // matter-vacuum
+ if (e1 < tiny_density || e0 < tiny_density) {  // matter-vacuum
   dmu[0][0] = dmu[0][1] = dmu[0][2] = dmu[0][3] = 0.;
  }
  // d_x u^\mu
@@ -453,7 +453,7 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
      ->getPrimVarHCenter(eos, tau, e1, p, nb, nq, ns, vx1, vy1, vz1);
  f->getCell(ix - 1, iy, iz)
      ->getPrimVarHCenter(eos, tau, e0, p, nb, nq, ns, vx0, vy0, vz0);
- if (e1 > 0. && e0 > 0.) {
+ if (e1 > tiny_density && e0 > tiny_density) {
   ut0 = 1.0 / sqrt(1.0 - vx0 * vx0 - vy0 * vy0 - vz0 * vz0);
   ux0 = ut0 * vx0;
   uy0 = ut0 * vy0;
@@ -484,7 +484,7 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
      ->getPrimVarHCenter(eos, tau, e1, p, nb, nq, ns, vx1, vy1, vz1);
  f->getCell(ix, iy - 1, iz)
      ->getPrimVarHCenter(eos, tau, e0, p, nb, nq, ns, vx0, vy0, vz0);
- if (e1 > 0. && e0 > 0.) {
+ if (e1 > tiny_density && e0 > tiny_density) {
   ut0 = 1.0 / sqrt(1.0 - vx0 * vx0 - vy0 * vy0 - vz0 * vz0);
   ux0 = ut0 * vx0;
   uy0 = ut0 * vy0;
@@ -513,7 +513,7 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
      ->getPrimVarHCenter(eos, tau, e1, p, nb, nq, ns, vx1, vy1, vz1);
  f->getCell(ix, iy, iz - 1)
      ->getPrimVarHCenter(eos, tau, e0, p, nb, nq, ns, vx0, vy0, vz0);
- if (e1 > 0. && e0 > 0.) {
+ if (e1 > tiny_density && e0 > tiny_density) {
   ut0 = 1.0 / sqrt(1.0 - vx0 * vx0 - vy0 * vy0 - vz0 * vz0);
   ux0 = ut0 * vx0;
   uy0 = ut0 * vy0;
@@ -622,7 +622,7 @@ void Hydro::ISformal() {
     Cell *c = f->getCell(ix, iy, iz);
     c->getPrimVarHCenter(eos, tau - dt / 2., e, p, nb, nq, ns, vx, vy,
                          vz);  // instead of getPrimVar()
-    if (e <= 0.) {             // empty cell?
+    if (e <= tiny_density) {             // empty cell?
      for (int i = 0; i < 4; i++)
       for (int j = 0; j <= i; j++) {
        c->setpiH0(i, j, 0.0);
@@ -786,7 +786,7 @@ void Hydro::ISformal() {
     Cell *c = f->getCell(ix, iy, iz);
     c->getPrimVarHCenter(eos, tau - 0.5 * dt, e, p, nb, nq, ns, vx, vy,
                          vz);  // getPrimVar() before
-    if (e <= 0.) continue;
+    if (e <= tiny_density) continue;
     double xm = -vx * dt / f->getDx();
     double ym = -vy * dt / f->getDy();
     double zm = -vz * dt / f->getDz() / (tau - 0.5 * dt);

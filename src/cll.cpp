@@ -109,6 +109,27 @@ void Cell::updateByViscFlux() {
  }
 }
 
+void Cell::updateByFrictionFlux() {
+ if(Q[0]+flux[0]<0.)
+  return;
+ for (int i = 0; i < 7; i++) Q[i] += flux[i];
+// --- rescaling the pi^{mu nu}
+ if(flux[0]<0.) {
+  for(int i=0; i<10; i++)
+   pi[i] *= (1. + flux[0]/Q[0]);
+ }
+// --- limiting the pi^{mu nu}
+ double maxT0 = 0., maxpi = 0.;
+ for(int i=0; i<4; i++) {
+  if(maxT0<fabs(Q[i])) maxT0=fabs(Q[i]);
+  if(maxpi<fabs(getpi(i,0))) maxpi=fabs(getpi(i,0));
+ }
+ if(maxpi>1.0*maxT0) {
+  for(int i=0; i<10; i++)
+   pi[i] = pi[i]*maxT0/maxpi*1.0;
+ }
+}
+
 void Cell::updateQtoQhByFlux() {
  for (int i = 0; i < 7; i++) Qh[i] = Q[i] + flux[i];
 }

@@ -207,6 +207,7 @@ public:
  }
  void updateByFlux();       // Q = Q + flux
  void updateByViscFlux();   // this limits the update based on flux[0]/Q[0] ratio
+ void updateByFrictionFlux();   // this version limits the shear stress tensor
  void updateQtoQhByFlux();  // Qh = Q + flux
  inline void setViscCorrCutFlag(double value) { viscCorrCut = value; }
  inline double getViscCorrCutFlag(void) { return viscCorrCut; }
