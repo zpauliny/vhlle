@@ -247,6 +247,9 @@ void printParameters() {
     cout << "etaSMin = " << etaSMin << endl;
     cout << "eEtaSMin = " << eEtaSMin << endl;
  }
+ else if (etaSparam == 4){
+    cout << "etaSparam = 4 is used" << al << endl;
+ }
  cout << "zeta/s = " << zetaS << endl;
  //cout << "epsilon0 = " << epsilon0 << endl;
  cout << "Rgt = " << Rgt << endl; // "  Rgz = " << Rgz << endl;
