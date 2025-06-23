@@ -70,12 +70,12 @@ double TransportCoeff::zeta(double e, double s, double T)
  }
 }
 
-void TransportCoeff::getEta(double e, double p, double nb, double s, double T, double &_eta, double &_zeta) {
- _eta = eta(e, p, nb, s, T);
+void TransportCoeff::getEta(double e, double p, double nb, double s, double T, double mub, double &_eta, double &_zeta) {
+ _eta = eta(e, p, nb, s, T, mub);
  _zeta = zeta(e,s,T);
 }
 
-double TransportCoeff::eta(double e, double p, double nb, double s, double T)
+double TransportCoeff::eta(double e, double p, double nb, double s, double T, double mub)
 {
   if (etaSparam == 0){
       return etaS0*s;
@@ -86,11 +86,27 @@ double TransportCoeff::eta(double e, double p, double nb, double s, double T)
   else if (etaSparam == 2){
       return (std::max(0.0, etaSMin + ((e>eEtaSMin) ? ( (ah*(e-eEtaSMin)+aRho*nb) ): al*(e-eEtaSMin)+aRho*nb))) * s;
   }
+  else if (etaSparam == 4){
+      const double eta_0 = 0.045;
+      const double eta_2 = 0.28;
+      const double eta_4 = 0.287;
+      double eta_tld = eta_0;
+      if( mub>=0. && mub < 0.2)
+        eta_tld = eta_0 + (eta_2 - eta_0) * mub / 0.2;
+      else if (mub>=0.2 && mub<0.4)
+        eta_tld = eta_2 + (eta_4 - eta_2) * (mub - 0.2) / 0.2;
+      else if (mub > 0.4)
+        eta_tld = eta_4;
+      if(T>0.)
+       return std::max(0.0, eta_tld) * (e + p) / T;
+      else
+       return 0.;
+  }
 }
 
-void TransportCoeff::getTau(double e, double p, double nb, double s, double T, double &_taupi, double &_tauPi) {
+void TransportCoeff::getTau(double e, double p, double nb, double s, double T, double mub, double &_taupi, double &_tauPi) {
  if (T > 0.) {
-  _taupi = 5. / 5.068 * eta(e, p, nb, s, T) / (s * T);
+  _taupi = 5. / 5.068 * eta(e, p, nb, s, T, mub) / (s * T);
   _tauPi = 6.0 / 5.068 * zeta(e, s, T) / (s * T);
  } else {
   _taupi = _tauPi = 0.;
