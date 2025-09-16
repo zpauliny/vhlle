@@ -4,6 +4,7 @@
 #include <iomanip>
 #include "rmn.h"
 #include "cll.h"
+#include "particle.h"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ Cell::Cell() {
   Qh[i] = 0.;
   Qprev[i] = 0.;
   flux[i] = 0.;
+  S[i] = 0.;
  }
  viscCorrCut = 1.;
  for (int i = 0; i < 10; i++) {
@@ -253,4 +255,11 @@ void Cell::Dump(double tau) {
       << Qh[6] / tau << endl;
 
  cout << "--------------------------------\n";
+}
+
+void Cell::updateByParticleSource(){
+  for (int i = 0; i < 7; i++) {
+     Q[i] += S[i];
+  }  
+  if (Q[T_] > 0.) setAllM(1.);
 }

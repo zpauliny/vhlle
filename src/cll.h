@@ -24,6 +24,7 @@
 #include <vector>
 #include "inc.h"
 class EoS;
+class Particle;
 
 // Alias for a 2D matrix and a cube holding one Matrix2D per cell 
 using Matrix2D = std::vector<std::vector<double>>;
@@ -58,6 +59,7 @@ private:
  // viscCorrCut: flag if the viscous corrections are cut for this cell:
  // 1.0 = uncut, < 1 :  cut by this factor
  double viscCorrCut;
+ double S[7];                     // sources from incoming particles
  bool vorticityOn = false;        // flag indicating if vorticity is enabled
 
 public:
@@ -264,4 +266,13 @@ public:
  inline void setViscCorrCutFlag(double value) { viscCorrCut = value; }
  inline double getViscCorrCutFlag(void) { return viscCorrCut; }
  void Dump(double tau);  // dump the contents of the cell into dump.dat
+
+ // particle sources for dynamical initialization
+ inline void addParticleSource(double* _S){
+  for (int i = 0; i < 7; i++) S[i] += _S[i];
+ };
+ inline void clearParticleSource(void) {
+  for (int i = 0; i < 7; i++) S[i] = 0.;
+ }
+ void updateByParticleSource();
 };
