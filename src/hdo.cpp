@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <unistd.h>
+#include <memory>
 #include "hdo.h"
 #include "inc.h"
 #include "rmn.h"
@@ -1207,7 +1208,11 @@ void Hydro::performStep(void) {
 void Hydro::addParticles(deque<Particle>* particles) {
  //==== particles coming in ====
  double particle_t = particles->front().getT();
+ #ifdef CARTESIAN
  double current_t = t;
+ #else
+ double current_t = tau;  // it is a quick fix for the code to compile in tau-eta but this fn is not intended to run in tau-eta
+ #endif
  while (particle_t < current_t) {
    if (particles->size() > 0) {
     Particle particleToInject = particles->front();

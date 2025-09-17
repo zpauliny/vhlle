@@ -538,7 +538,7 @@ void transformToLab(double eta, double &vx, double &vy, double &vz) {
 
 // return value: the number of surface elements reconstructed at the current timestep
 int Fluid::outputSurface(double tau, bool extendFO) {
- static double EtotSurfPos = 0.0, EtotSurfNeg = 0.0;
+ static double EtotSurfPos = 0.0, EtotSurfPosVisc = 0.0, EtotSurfNeg = 0.0;
  static double nbTotSurf = 0.0, nbTotSurfPos = 0.0, nbTotSurfNeg = 0.0;
  double e, p, nb, nq, ns, T, mub, muq, mus, vx, vy, vz, Q[7];
  double E = 0., Ecore = 0., Efull = 0., S = 0., Px = 0., vt_num = 0., vt_den = 0.,
@@ -892,6 +892,7 @@ int Fluid::outputSurface(double tau, bool extendFO) {
 #endif
      // Jacobian to transform covariant (lower index)
      // vector from Milne to Cartesian coordinate system
+     #ifndef CARTESIAN
      const std::unique_ptr<Matrix2D> jacobian = vorticityOn
       ? std::make_unique<Matrix2D>(Matrix2D{
          {ch, 0., 0., -sh},
@@ -899,6 +900,15 @@ int Fluid::outputSurface(double tau, bool extendFO) {
          {0., 0., 1., 0.},
          {-sh, 0., 0., ch}})
       : nullptr;
+     #else
+     const std::unique_ptr<Matrix2D> jacobian = vorticityOn
+      ? std::make_unique<Matrix2D>(Matrix2D{
+         {1., 0., 0., 0.},
+         {0., 1., 0., 0.},
+         {0., 0., 1., 0.},
+         {0., 0., 0., 1.}})
+      : nullptr;
+     #endif
 
      // Transform dbeta to Cartesian coordinates. This calculates d_i beta_j
      std::unique_ptr<Matrix2D> dbetaCartesian = vorticityOn
@@ -931,8 +941,7 @@ int Fluid::outputSurface(double tau, bool extendFO) {
      double dEsurfVisc = 0.;
      for (int i = 0; i < 4; i++)
       dEsurfVisc += picart[index44(0, i)] * dsigma[i];
-     EtotSurf += (eC + pC) * uC[0] * dVEff - pC * dsigma[0] + dEsurfVisc;
-     nbSurf += nbC * dVEff;
+     EtotSurfPosVisc += dEtotSurf + dEsurfVisc;
      } else { // a case of matter flowing in, no use for particlization
       EtotSurfNeg += dEtotSurf;
       nbTotSurfNeg += nbC * dVEff;

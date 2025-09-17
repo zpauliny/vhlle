@@ -80,13 +80,8 @@ double xmin {-5.0}, xmax {5.0}, ymin {-5.0}, ymax {5.0}, etamin {-5.0},
 string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
-bool corona_was_output {false};
-int minParticlesFO {15};
-
-void setDefaultParameters() {
-  // specifically for dynamical initialization, do not resize
-  tauResize = 100.0;
-}
+bool corona_was_output {false};  // dynIC
+int minParticlesFO {15};  // dynIC
 
 void readParameters(char *parFile) {
     char parName[255], parValue[255];
@@ -223,7 +218,7 @@ void printParameters() {
     cout << "zetaSSigmaMinus = " << zetaSSigmaMinus << endl;
     cout << "zetaSSigmaPlus = " << zetaSSigmaPlus << endl;
   }
-  if (icModel==9) {
+  if (icModel==10) {
     cout << "Gaussian_Sigma = " << gaussian_sigma << endl;
     cout << "minParticlesFO = " << minParticlesFO << endl;
   } else {
@@ -292,12 +287,14 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
- deque<Particle>* particles = new deque<Particle>();
+ deque<Particle>* particles = new deque<Particle>();   // dynIC
  time_t start = 0, end;
  time(&start);
 
+ if(icModel==10) {
+   tauResize = 100.0;    // do not resize grid in dynamicIC scenario
+ }
  // read parameters from file
- setDefaultParameters();
  readCommandLine(argc, argv);
  printParameters();
 
@@ -403,8 +400,10 @@ int main(int argc, char **argv) {
  // hydro init
  double ctime;
  #ifdef CARTESIAN
- h = new Hydro(f, eos, trcoeff, timeInit, dtau);
- ctime = h->time();
+ if(icModel==10) {
+   h = new Hydro(f, eos, trcoeff, timeInit, dtau);
+   ctime = h->time();
+ }
  #else
  h = new Hydro(f, eos, trcoeff, tau0, dtau);
  #endif
@@ -417,17 +416,18 @@ int main(int argc, char **argv) {
  time(&start);
  // h->setNSvalues() ; // initialize viscous terms
  f->initOutput(outputDir.c_str(), tau0, freezeoutOnly);
- if(icModel<10) {
+ if(icModel!=10) {
    f->outputCorona(tau0, freezeoutExtend);
    if (vorticityOn) f->printDbetaHeader();
  }
 
  bool resized = false; // flag if the grid has been resized
 
- int timestep = 0;
- int nelements = 1;
  std::string dir=outputDir.c_str();
  VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin);
+ int nelements = 1;
+
+ // ############### THE TIMESTEP LOOP ##############
  do {
   // small tau: decrease timestep by making substeps, in order
   // to avoid instabilities in eta direction (signal velocity ~1/tau)
@@ -451,20 +451,25 @@ int main(int argc, char **argv) {
    }
    h->setDtau(h->getDtau() * nSubSteps);
    cout << "timestep reduced by " << nSubSteps << endl;
-  } else
+  } else {
    h->performStep();
+  }
 
   if (icModel == 10)
   {
     if (particles->size() > 0) h->addParticles(particles);
   }
 
-  if ((ctime > timeInitFO) && (nelements>0)) {
-    nelements = f->outputSurface(ctime);
-    if (!corona_was_output) {
-      f->outputCorona(1);
-      corona_was_output = true;
-    }
+  if (icModel == 10) {
+    if ((ctime > timeInitFO) && (nelements>0)) {
+      nelements = f->outputSurface(ctime, freezeoutExtend);
+      if (!corona_was_output) {
+        f->outputCorona(1, freezeoutExtend);
+        corona_was_output = true;
+      }
+    } 
+  } else {
+    nelements = f->outputSurface(h->getTau(), freezeoutExtend);
   }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
@@ -474,7 +479,7 @@ int main(int argc, char **argv) {
     {
       outputCoronaParticles(particles, outputDir);
     }
-    break;
+    break; // otherwise, simply stop the evolution when there is no new surface elements
   }
 
   if(ctime>=tauResize and resized==false) {
@@ -482,7 +487,6 @@ int main(int argc, char **argv) {
    f = expandGrid2x(h, eos, eosH, trcoeff);
    resized = true;
   }
-  timestep++;
  } while(ctime<tauMax+0.0001);
 
  end = 0;
