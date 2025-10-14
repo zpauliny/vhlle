@@ -455,12 +455,9 @@ int main(int argc, char **argv) {
    h->performStep();
   }
 
-  if (icModel == 10)
-  {
-    if (particles->size() > 0) h->addParticles(particles);
-  }
-
   if (icModel == 10) {
+    if (particles->size() > 0) h->addParticles(particles);
+    
     if ((ctime > timeInitFO) && (nelements>0)) {
       nelements = f->outputSurface(ctime, freezeoutExtend);
       if (!corona_was_output) {
@@ -473,6 +470,7 @@ int main(int argc, char **argv) {
   }
   if (!freezeoutOnly)
    f->outputGnuplot(ctime);
+  
   if (nelements == 0)
   {
     if (icModel == 10)

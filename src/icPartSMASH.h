@@ -12,18 +12,12 @@ private:
  double dx, dy, dz;
  double ***T00, ***T0x, ***T0y, ***T0z, ***QB, ***QE, ***QS;
  // auxiliary particle values for reading from file
- //#ifdef CARTESIAN 
  double T_val, Z_val, E_val, Pz_val, M_val;
- //#else
  double Tau_val, X_val, Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val;
- //#endif
  int Id_val, Baryon_val, Charge_val, Strangeness_val;
-  // auxiliary particle arrays
- //#ifdef CARTESIAN
+ // auxiliary particle arrays
  std::vector<double> T, Z, E, Pz;
- //#else
  std::vector<double> Tau, X, Y, Eta, Mt, Px, Py, Rap;
- //#endif
  std::vector<int> Id, Charge, Baryon, Strangeness;
 
  double tau0;
@@ -105,6 +99,7 @@ struct velocityVector {
 };
 
 void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);
+
 velocityVector velocityHyperbolic(double _mt, double _px, double _py, double _y, 
   double _eta, double _etaDiff, double _tau);
 

@@ -7,12 +7,12 @@ class Particle {
      double e, px, py, pz;   // particle momentum
      int pdg;                // pdg code
      int ixc, iyc, izc;      // cell coordinates of the particle
-     int eventNo;           // event number: important for averaged IC
+     int eventNo;            // event number: important for averaged IC
      double R;               // sigma of the gaussian
      int nsmoothx, nsmoothy,
       nsmoothz;              // smoothly distribute to +- this many cells
      double gauss_norm;      // normalization of the smearing kernel
-     double scale;         // scaling factor for the case Nevents>1
+     double scale;           // scaling factor for the case Nevents>1
      double calculateNorm(Fluid *f, double R);
                              // function to calculate the norm of the kernel
          

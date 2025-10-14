@@ -233,6 +233,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
  T0z = new double**[nx];
  QB = new double**[nx];
  QE = new double**[nx];
+ QS = new double**[nx];
  for (int ix = 0; ix < nx; ix++) {
   T00[ix] = new double*[ny];
   T0x[ix] = new double*[ny];
@@ -240,6 +241,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
   T0z[ix] = new double*[ny];
   QB[ix] = new double*[ny];
   QE[ix] = new double*[ny];
+  QS[ix] = new double*[ny];
   for (int iy = 0; iy < ny; iy++) {
    T00[ix][iy] = new double[nz];
    T0x[ix][iy] = new double[nz];
@@ -247,6 +249,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
    T0z[ix][iy] = new double[nz];
    QB[ix][iy] = new double[nz];
    QE[ix][iy] = new double[nz];
+   QS[ix][iy] = new double[nz];
    for (int iz = 0; iz < nz; iz++) {
     T00[ix][iy][iz] = 0.0;
     T0x[ix][iy][iz] = 0.0;
@@ -254,6 +257,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
     T0z[ix][iy][iz] = 0.0;
     QB[ix][iy][iz] = 0.0;
     QE[ix][iy][iz] = 0.0;
+    QS[ix][iy][iz] = 0.0;
    }
   }
  }
@@ -292,7 +296,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
   instream >> T_val >> X_val >> Y_val >> Z_val >> M_val >> E_val >> Px_val >>
               Py_val >> Pz_val >> Id_val >> x1 >> Charge_val >> x2 >> x3 >>
               x4 >> x5 >> x6 >> x7 >> x8 >> x9 >> Baryon_val >> Strangeness_val;
-
+  
   if(abs(Id_val)>100) { // exclude photons, W and Z bosons and Higgs
     Particle particleIn(f, Rgz, Baryon_val, Charge_val, Strangeness_val,
     T_val, X_val, Y_val, Z_val, E_val, Px_val, Py_val, Pz_val, Id_val, nevents-1);
@@ -558,6 +562,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
         T0z[ix][iy][iz] += particleToSmooth.getPz() * weight * scale;
         QB[ix][iy][iz] += particleToSmooth.getB() * weight * scale;
         QE[ix][iy][iz] += particleToSmooth.getQ() * weight * scale;
+        QS[ix][iy][iz] += particleToSmooth.getS() * weight * scale;
   }
   
   particles->pop_front();
@@ -574,7 +579,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
         Q[Z_] = T0z[ix][iy][iz] / dx / dy / dz;
         Q[NB_] = QB[ix][iy][iz] / dx / dy / dz;
         Q[NQ_] = QE[ix][iy][iz] / dx / dy / dz;
-        Q[NS_] = 0.0;
+        Q[NS_] = QS[ix][iy][iz] / dx / dy / dz;
         transformPV(eos, Q, e, p, nb, nq, ns, vx, vy, vz);
 
         Cell* c = f->getCell(ix, iy, iz);

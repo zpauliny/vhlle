@@ -1391,6 +1391,7 @@ void Fluid::addParticle(Particle _particle) {
       source[3] = _particle.getPz() * weight * scale / dv;
       source[4] = _particle.getB() * weight * scale / dv;
       source[5] = _particle.getQ() * weight * scale / dv;
+      source[6] = _particle.getS() * weight * scale / dv;
       if(isnan(source[0]) or isinf(source[0])) {
         cout << "Fluid::addParticle: NaN/inf\n" ;
       }
