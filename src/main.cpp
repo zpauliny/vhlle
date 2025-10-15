@@ -29,6 +29,7 @@
 #include "ickw.h"
 #include "icPartUrqmd.h"
 #include "icPartSMASH.h"
+#include "icDynFlu.h"
 #include "icGlauber.h"
 #include "icGubser.h"
 #include "icGlissando.h"
@@ -377,8 +378,8 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==10) { // SMASH dynamical IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), gaussian_sigma, particles);
-   ic->setIC(f,eos,particles, timeInit, minParticlesFO, timeInitFO);
+   IcDynFlu *ic = new IcDynFlu(f, isInputFile.c_str(), gaussian_sigma, particles);
+   ic->setIC(f, eos, particles, timeInit, minParticlesFO, timeInitFO);
    delete ic;
  } else if(icModel==11){ // IC for testing purposes
    ICTest *ic = new ICTest();

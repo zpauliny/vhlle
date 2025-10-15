@@ -1,9 +1,7 @@
 #include <vector>
-#include <deque>
 
 class Fluid;
 class EoS;
-class Particle;
 
 class IcPartSMASH {
 private:
@@ -12,11 +10,9 @@ private:
  double dx, dy, dz;
  double ***T00, ***T0x, ***T0y, ***T0z, ***QB, ***QE, ***QS;
  // auxiliary particle values for reading from file
- double T_val, Z_val, E_val, Pz_val, M_val;
  double Tau_val, X_val, Y_val, Eta_val, Mt_val, Px_val, Py_val, Rap_val;
  int Id_val, Baryon_val, Charge_val, Strangeness_val;
  // auxiliary particle arrays
- std::vector<double> T, Z, E, Pz;
  std::vector<double> Tau, X, Y, Eta, Mt, Px, Py, Rap;
  std::vector<int> Id, Charge, Baryon, Strangeness;
 
@@ -79,10 +75,8 @@ private:
 
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, int _smoothingType);
- IcPartSMASH(Fluid *f, const char *filename, double gaussian_sigma, std::deque<Particle>* particles);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos); 
- void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double &ctime, int min_particles_FO, double &ftime);
  inline double getTau0() { return tau0; }
 };
 
@@ -97,8 +91,6 @@ struct velocityVector {
     double vy;
     double vz;
 };
-
-void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);
 
 velocityVector velocityHyperbolic(double _mt, double _px, double _py, double _y, 
   double _eta, double _etaDiff, double _tau);
