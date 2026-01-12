@@ -24,11 +24,12 @@ private:
 
  int num_corona_cells = -1; // number of corona cells. -1 means not set yet
  bool vorticityOn = false;
+ bool cartesian;
 
 public:
  Fluid(EoS *_eos, EoS *_eosH, TransportCoeff *_trcoeff, int _nx, int _ny,
        int _nz, double _minx, double _maxx, double _miny, double _maxy,
-       double _minz, double _maxz, double dt, double eCrit);
+       double _minz, double _maxz, double dt, double eCrit, bool _cartesian);
  ~Fluid();
  void initOutput(const char *dir, double tau0, bool hsOnly);
  void printDbetaHeader();

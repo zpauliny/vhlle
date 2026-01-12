@@ -235,9 +235,9 @@ void IcDynFlu::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &tim
 }
 
 // dynamical IC: set up IC with 1st particles, others stay in queue
-// works only #ifdef CARTESIAN
-void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir) 
-{
+void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir) { 
+ // works only in CARTESIAN coordinates
+
  // sort particles by event number
   std::vector<Particle> tempVec;
     while (!particles->empty()) {

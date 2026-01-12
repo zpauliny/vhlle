@@ -83,6 +83,7 @@ int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for tabl
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
 bool corona_was_output {false};  // dynIC
 int minParticlesFO {15};  // dynIC
+bool cartesian {false};  // dynIC
 
 void readParameters(char *parFile) {
     char parName[255], parValue[255];
@@ -140,6 +141,7 @@ void readParameters(char *parFile) {
         {"smoothingType", [](const string& value) { smoothingType = atoi(value.c_str()); }},
         {"Gaussian_Sigma", [](const string& value) { gaussian_sigma = atof(value.c_str()); }},
         {"minParticlesFO", [](const string& value) { minParticlesFO = atoi(value.c_str()); }},
+        {"cartesian", [](const string& value) { cartesian = atoi(value.c_str()); }},
     };
 
     while (fin.good()) {
@@ -173,6 +175,7 @@ void printParameters() {
   cout << "ny = " << ny << endl;
   cout << "nz = " << nz << endl;
   cout << "icModel = " << icModel << endl;
+  cout << "cartesian coordinate system = " << cartesian << endl;
   cout << "glauberVar = " << glauberVariable << "   ! 0=epsilon,1=entropy"
         << endl;
   cout << "xmin = " << xmin << endl;
@@ -230,8 +233,8 @@ void printParameters() {
   cout << "smoothingType = " << smoothingType << endl;
   cout << "impactPar = " << impactPar << endl;
   cout << "s0ScaleFactor = " << s0ScaleFactor << endl;
- cout << "VTK_output_values = " << vtk_values << endl;
- cout << "======= end parameters =======\n";
+  cout << "VTK_output_values = " << vtk_values << endl;
+  cout << "======= end parameters =======\n";
 }
 
 void readCommandLine(int argc, char** argv)
@@ -264,7 +267,7 @@ Fluid* expandGrid2x(Hydro* h, EoS* eos, EoS* eosH, TransportCoeff *trcoeff) {
  // creating a new fluid, twice the transverse size of the current one
  Fluid* fnew = new Fluid(eos, eosH, trcoeff, f->getNX(), f->getNY(), f->getNZ(),
    2.0*f->getX(0), 2.0*f->getX(f->getNX()-1), 2.0*f->getY(0), 2.0*f->getY(f->getNY()-1),
-   f->getZ(0), f->getZ(f->getNZ()-1), 2.0*h->getDtau(), f->geteCrit());
+   f->getZ(0), f->getZ(f->getNZ()-1), 2.0*h->getDtau(), f->geteCrit(), cartesian);
  if (vorticityOn) fnew->enableVorticity();
  // filling the new fluid
  for(int ix=0; ix<f->getNX(); ix++)
@@ -293,8 +296,9 @@ int main(int argc, char **argv) {
  time(&start);
 
  if(icModel==10) {
-   tauResize = 100.0;    // do not resize grid in dynamicIC scenario
+  tauResize = 100.0;    // do not resize grid in dynIC
  }
+
  // read parameters from file
  readCommandLine(argc, argv);
  printParameters();
@@ -332,7 +336,7 @@ int main(int argc, char **argv) {
   etaSScaleMuB, zetaSPeakEpsilon, zetaSScaleBeta, zetaSSigmaMinus, zetaSSigmaPlus,  eos, etaSparam, zetaSparam);
 
  f = new Fluid(eos, eosH, trcoeff, nx, ny, nz, xmin, xmax, ymin, ymax, etamin,
-               etamax, dtau, eCrit);
+               etamax, dtau, eCrit, cartesian);
  cout << "fluid allocation done\n";
  double timeInit = 0; // current time, tau or t depending on the coordinate frame
  double timeInitFO = 0.;  // time to start freezeout
@@ -400,14 +404,14 @@ int main(int argc, char **argv) {
 
  // hydro init
  double ctime;
- #ifdef CARTESIAN
- if(icModel==10) {
-   h = new Hydro(f, eos, trcoeff, timeInit, dtau);
-   ctime = h->time();
+ 
+ if(cartesian) {
+  h = new Hydro(f, eos, trcoeff, timeInit, dtau, cartesian);
+  ctime = h->getTime();
  }
- #else
- h = new Hydro(f, eos, trcoeff, tau0, dtau);
- #endif
+ else {
+  h = new Hydro(f, eos, trcoeff, tau0, dtau, cartesian);
+ }
  // Enable vorticity if key is set in the config file
  if (vorticityOn) {
   h -> enableVorticity();
@@ -425,7 +429,7 @@ int main(int argc, char **argv) {
  bool resized = false; // flag if the grid has been resized
 
  std::string dir=outputDir.c_str();
- VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin);
+ VtkOutput vtk_out=VtkOutput(dir,eos,xmin,ymin,etamin,cartesian);
  int nelements = 1;
 
  // ############### THE TIMESTEP LOOP ##############
@@ -436,11 +440,13 @@ int main(int argc, char **argv) {
     vtk_out.write(*h,vtk_values);
   }
   int nSubSteps = 1;
-  #ifdef CARTESIAN
-  ctime = h->time();
-  #else
-  ctime = h->getTau();
-  #endif
+  if (cartesian) {
+   ctime = h->getTime();
+  }
+  else {
+   ctime = h->getTau();
+  }
+  
   while (dtau / nSubSteps >
          1.0 * ctime * (etamax - etamin) / (nz - 1)) {
    nSubSteps *= 2;  // 0.02 in "old" coordinates
@@ -462,7 +468,7 @@ int main(int argc, char **argv) {
     if ((ctime > timeInitFO) && (nelements>0)) {
       nelements = f->outputSurface(ctime, freezeoutExtend);
       if (!corona_was_output) {
-        f->outputCorona(1, freezeoutExtend);
+        f->outputCorona(ctime, freezeoutExtend);
         corona_was_output = true;
       }
     } 

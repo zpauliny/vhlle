@@ -15,15 +15,14 @@ private:
  EoS *eos;
  TransportCoeff *trcoeff;
  double dt, tau;  // dt: timestep, tau: current value of the proper time
- #ifdef CARTESIAN
  double t;  // time in Cartesian frame
- #endif
  double tau_z;    // effective value of the proper time used in 1/tau factors in
                   // the fluxes. Used to increase the accuracy
  bool vorticityOn = false;
+ bool cartesian;
 
 public:
- Hydro(Fluid *_f, EoS *_eos, TransportCoeff *_trcoeff, double _t0, double _dt);
+ Hydro(Fluid *_f, EoS *_eos, TransportCoeff *_trcoeff, double _t0, double _dt, bool _cartesian);
  ~Hydro();
  void enableVorticity(); // enable vorticity
  void setDtau(double deltaTau);  // change the timestep
@@ -60,9 +59,8 @@ public:
  void performStep(void);
  // gets the current proper time
  inline double getTau() const { return tau; }
- #ifdef CARTESIAN
- double time() { return t; }
- #endif
+ // gets the current time in cartesian coordinates
+ inline double getTime() { return t; }
  // adds sources from incoming particles into the hydro
  void addParticles(std::deque<Particle>* particles);
 };
