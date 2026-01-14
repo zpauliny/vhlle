@@ -295,13 +295,13 @@ int main(int argc, char **argv) {
  time_t start = 0, end;
  time(&start);
 
- if(icModel==10) {
-  tauResize = 100.0;    // do not resize grid in dynIC
- }
-
  // read parameters from file
  readCommandLine(argc, argv);
  printParameters();
+
+  if(icModel==10) {
+  tauResize = 100.0;    // do not resize grid in dynIC
+ }
 
  // EoS for hydro evolution
  if (eosType == 0)
@@ -382,6 +382,12 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==10) { // SMASH dynamical IC
+    if (!cartesian) {
+     std::string dynflu_warning = "IC model = 10: Dynamical Fluidization \n"
+                                 "Cartesian coordinate system must be set. Exiting.\n";
+     std::cout << red << dynflu_warning << reset;
+     exit(1);
+    }
    IcDynFlu *ic = new IcDynFlu(f, isInputFile.c_str(), gaussian_sigma, particles);
    ic->setIC(f, eos, particles, timeInit, minParticlesFO, timeInitFO);
    delete ic;
