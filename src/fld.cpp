@@ -685,20 +685,24 @@ int Fluid::outputSurface(double tau, bool extendFO) {
     for (int jx = 0; jx < 2; jx++)
      for (int jy = 0; jy < 2; jy++)
       for (int jz = 0; jz < 2; jz++) {
+       double e_now, e_prev;
        double _p, _nb, _nq, _ns, _vx, _vy, _vz;
        Cell *cc = getCell(ix + jx, iy + jy, iz + jz);
+
+       cc->getQ(QCube[1][jx][jy][jz]);
+       cc->getQprev(QCube[0][jx][jy][jz]);
+       
        if (cartesian) {
-        cc->getPrimVar(eos, 1.0, e, _p, _nb, _nq, _ns, _vx, _vy, _vz);
-        cc->getPrimVarPrev(eos, 1.0, e, _p, _nb, _nq, _ns, _vx, _vy, _vz);
+        cc->getPrimVar(eos, 1.0, e_now, _p, _nb, _nq, _ns, _vx, _vy, _vz);
+        cc->getPrimVarPrev(eos, 1.0, e_prev, _p, _nb, _nq, _ns, _vx, _vy, _vz);
        }
        else {
-        cc->getPrimVar(eos, tau, e, _p, _nb, _nq, _ns, _vx, _vy, _vz);
-        cc->getPrimVarPrev(eos, tau - dt, e, _p, _nb, _nq, _ns, _vx, _vy, _vz);
+        cc->getPrimVar(eos, tau, e_now, _p, _nb, _nq, _ns, _vx, _vy, _vz);
+        cc->getPrimVarPrev(eos, tau - dt, e_prev, _p, _nb, _nq, _ns, _vx, _vy, _vz);
        }
-       cc->getQ(QCube[1][jx][jy][jz]);
-       ccube[1][jx][jy][jz] = e;
-       cc->getQprev(QCube[0][jx][jy][jz]);
-       ccube[0][jx][jy][jz] = e;
+       ccube[1][jx][jy][jz] = e_now;
+       ccube[0][jx][jy][jz] = e_prev;
+
        // ---- get viscous tensor
        for (int ii = 0; ii < 4; ii++) {
         for (int jj = 0; jj <= ii; jj++) {
@@ -791,17 +795,18 @@ int Fluid::outputSurface(double tau, bool extendFO) {
           }
          }
        }
+        
+     if (!cartesian){
+      etaC = getZ(iz) + cornelius->get_centroid_elem(isegm, 3);
+      transformToLab(etaC, vxC, vyC, vzC);  // viC is now in lab.frame!
+     }
+     
      double v2C = vxC * vxC + vyC * vyC + vzC * vzC;
      if (v2C > 1.) {
       vxC *= sqrt(0.99 / v2C);
       vyC *= sqrt(0.99 / v2C);
       vzC *= sqrt(0.99 / v2C);
       v2C = 0.99;
-     }
-    
-     if (!cartesian){
-      etaC = getZ(iz) + cornelius->get_centroid_elem(isegm, 3);
-      transformToLab(etaC, vxC, vyC, vzC);  // viC is now in lab.frame!
      }
      
      double gammaC = 1. / sqrt(1. - vxC * vxC - vyC * vyC - vzC * vzC);
@@ -1152,17 +1157,17 @@ output::f2d << endl;
          piC[ii] += piSquare[jx][jy][jz][ii] * 0.125;
         PiC += PiSquare[jx][jy][jz] * 0.125;
        }
+     if (!cartesian) {
+      etaC = getZ(iz) + 0.5 * dz;
+      transformToLab(etaC, vxC, vyC, vzC);  // viC is now in lab.frame!
+     }
+
      double v2C = vxC * vxC + vyC * vyC + vzC * vzC;
      if (v2C > 1.) {
       vxC *= sqrt(0.99 / v2C);
       vyC *= sqrt(0.99 / v2C);
       vzC *= sqrt(0.99 / v2C);
       v2C = 0.99;
-     }
-
-     if (!cartesian) {
-      etaC = getZ(iz) + 0.5 * dz;
-      transformToLab(etaC, vxC, vyC, vzC);  // viC is now in lab.frame!
      }
      
      double gammaC = 1. / sqrt(1. - vxC * vxC - vyC * vyC - vzC * vzC);
