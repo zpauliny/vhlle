@@ -81,7 +81,6 @@ double xmin {-5.0}, xmax {5.0}, ymin {-5.0}, ymax {5.0}, etamin {-5.0},
 string collSystem, outputDir {"data"}, isInputFile, vtk_values {""};
 int icModel {1},glauberVariable  {1};  // icModel=1 for pure Glauber, 2 for table input (Glissando etc)
 int smoothingType {0}; // 0 for kernel contracted in eta, 1 for invariant kernel
-bool corona_was_output {false};  // dynIC
 int minParticlesFO {15};  // dynIC
 bool cartesian {false};  // dynIC
 
@@ -473,10 +472,6 @@ int main(int argc, char **argv) {
     
     if ((ctime > timeInitFO) && (nelements>0)) {
       nelements = f->outputSurface(ctime, freezeoutExtend);
-      if (!corona_was_output) {
-        f->outputCorona(ctime, freezeoutExtend);
-        corona_was_output = true;
-      }
     } 
   } else {
     nelements = f->outputSurface(h->getTau(), freezeoutExtend);

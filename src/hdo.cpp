@@ -465,6 +465,7 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
   c->getPrimVarHCenter(eos, tau - 0.5 * dt, e1, p, nb, nq, ns, vxH, vyH, vzH);
  }
  double tauPlusHalf = (cartesian) ? 1.0 : (tau + 0.5 * dt);
+ double tauMinusHalf = (cartesian) ? 1.0 : (tau - 0.5 * dt);
  if (vorticityOn) {
   eos->eos(e0, nb, nq, ns, T0, mub, muq, mus, p);
   eos->eos(e1, nb, nq, ns, T1, mub, muq, mus, p);
@@ -648,11 +649,11 @@ void Hydro::NSquant(int ix, int iy, int iz, double pi[4][4], double &Pi,
  }
  // additional terms from Christoffel symbols :)
  if (!cartesian) {
-  dmu[3][0] += uuu[3] / (tau - 0.5 * dt);
-  dmu[3][3] += uuu[0] / (tau - 0.5 * dt);
+  dmu[3][0] += uuu[3] / tauMinusHalf;
+  dmu[3][3] += uuu[0] / tauMinusHalf;
   if(vorticityOn && T>0.){
-   (*dbeta)[3][0] += uuu[3] / (T * (tau - 0.5 * dt));
-   (*dbeta)[3][3] += uuu[0] / (T * (tau - 0.5 * dt));
+   (*dbeta)[3][0] += uuu[3] / (T * tauMinusHalf);
+   (*dbeta)[3][3] += uuu[0] / (T * tauMinusHalf);
   }
  }
  // calculation of Z[mu][nu][lambda][rho]
