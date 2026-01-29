@@ -69,6 +69,12 @@ void checkGridBorders(double min, double max, std::string _x) {
   }
 }
 
+bool parse_bool(const std::string& value) {
+    if (value == "1" || value == "true")  return true;
+    if (value == "0" || value == "false") return false;
+    throw std::runtime_error("Invalid boolean in config file: " + value);
+}
+
 int nx {100}, ny {100}, nz {100}, eosType {1}, etaSparam {0}, zetaSparam {0}, eosTypeHadron {0};
 // only FO hypersurface output: {0,1};  freezeout output extended by e,nb: {0,1}
 bool freezeoutOnly {false}, freezeoutExtend {false}, vorticityOn {false};
@@ -134,13 +140,13 @@ void readParameters(char *parFile) {
         {"etaSMin", [](const string& value) { etaSMin = atof(value.c_str()); }},
         {"etaSShiftMuB", [](const string& value) { etaSShiftMuB = atof(value.c_str()); }},
         {"etaSScaleMuB", [](const string& value) { etaSScaleMuB = atof(value.c_str()); }},
-        {"freezeoutOnly", [](const string& value) { freezeoutOnly = atoi(value.c_str()); }},
-        {"freezeoutExtend", [](const string& value) { freezeoutExtend = atoi(value.c_str()); }},
+        {"freezeoutOnly", [](const string& value) { freezeoutOnly = parse_bool(value.c_str()); }},
+        {"freezeoutExtend", [](const string& value) { freezeoutExtend = parse_bool(value.c_str()); }},
         {"vorticity", [](const string& value) { vorticityOn = atoi(value.c_str()); }},
         {"smoothingType", [](const string& value) { smoothingType = atoi(value.c_str()); }},
         {"Gaussian_Sigma", [](const string& value) { gaussian_sigma = atof(value.c_str()); }},
         {"minParticlesFO", [](const string& value) { minParticlesFO = atoi(value.c_str()); }},
-        {"cartesian", [](const string& value) { cartesian = atoi(value.c_str()); }},
+        {"cartesian", [](const string& value) { cartesian = parse_bool(value.c_str()); }},
     };
 
     while (fin.good()) {
