@@ -422,6 +422,7 @@ int main(int argc, char **argv) {
  }
  else {
   h = new Hydro(f, eos, trcoeff, tau0, dtau, cartesian);
+  ctime = h->getTau();
  }
  // Enable vorticity if key is set in the config file
  if (vorticityOn) {
@@ -451,13 +452,7 @@ int main(int argc, char **argv) {
     vtk_out.write(*h,vtk_values);
   }
   int nSubSteps = 1;
-  if (cartesian) {
-   ctime = h->getTime();
-  }
-  else {
-   ctime = h->getTau();
-  }
-  
+    
   while (dtau / nSubSteps >
          1.0 * ctime * (etamax - etamin) / (nz - 1)) {
    nSubSteps *= 2;  // 0.02 in "old" coordinates
@@ -471,6 +466,13 @@ int main(int argc, char **argv) {
    cout << "timestep reduced by " << nSubSteps << endl;
   } else {
    h->performStep();
+  }
+  
+  if (cartesian) {
+   ctime = h->getTime();
+  }
+  else {
+   ctime = h->getTau();
   }
 
   if (icModel == 10) {
