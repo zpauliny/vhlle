@@ -130,3 +130,23 @@ double Particle::getWeight(int ix, int iy, int iz, Fluid *f,
 
    return getWeight(xdiff, ydiff, zdiff);
 }
+void Particle::energyLoss(double energyLoss0, double dt){
+   double p = sqrt(pow(px,2) + pow(py,2) + pow(pz,2));
+   const double m = pow(e,2) - pow(m,2);
+
+   double phi = std::asin(py/px);
+   double theta = std::acos(pz/p);
+
+   double v  = sqrt(p/e);
+   double dx =  v * cos(phi) * sin(theta) * dt;
+   double dy =  v * sin(phi) * sin(theta) * dt;
+   double dz =  v * cos(theta) * dt;
+   x += dx;
+   y += dy;
+   z += dz;
+   double dr = sqrt(pow(dx,2) + pow(dy,2) + pow(dz,2));
+   double de = energyLoss0 * dr;
+   e -= de;
+   p = sqrt(pow(e,2) - pow(m,2));
+}
+
