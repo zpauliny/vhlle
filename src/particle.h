@@ -51,4 +51,5 @@ class Particle {
 
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
      inline int getEventNo(void) const { return eventNo; }
+     inline void energyLoss(double energyLoss0, double dt); 
 };
