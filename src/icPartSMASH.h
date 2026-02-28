@@ -85,9 +85,13 @@ private:
 public:
  IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0);
  IcPartSMASH(Fluid *f, const char *filename, double gaussian_sigma, std::deque<Particle>* particles);
+ IcPartSMASH(Fluid *f, const char *filename, double _Rgt, double _Rgz, double tau0, std::vector<Particle>* jets);
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
  void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double &ctime, int min_particles_FO, double &ftime);
+ void setIC(Fluid *f, EoS *eos, std::vector<Particle>* jets);
 };
 
 void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);
+void jetsFiltration(std::vector<Particle>* _particles);
+

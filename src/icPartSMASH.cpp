@@ -16,6 +16,8 @@
 
 using namespace std;
 
+// To make a copy of the constructor 
+
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
                          double _tau0) {
  nx = f->getNX();
@@ -436,6 +438,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
   t = particles->front().getT(); 
   } // all particles for IC should be in now
 
+  double a = "s";
   // initialize cell values
   for (int ix = 0; ix < nx; ix++)
     for (int iy = 0; iy < ny; iy++)
@@ -520,4 +523,145 @@ void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDi
     std::cout << n_part << " particles were left after hydro evolution.\n" <<
                  "At the end of the run, particle queue is empty: " <<
                  particles->empty() << "\n";
+}
+
+IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
+                         double _tau0, std::vector<Particle>* _particles) {
+ nx = f->getNX();
+ ny = f->getNY();
+ nz = f->getNZ();
+ dx = f->getDx();
+ dy = f->getDy();
+ dz = f->getDz();
+ xmin = f->getX(0);
+ xmax = f->getX(nx - 1);
+ ymin = f->getY(0);
+ ymax = f->getY(ny - 1);
+ zmin = f->getZ(0);
+ zmax = f->getZ(nz - 1);
+
+ tau0 = _tau0;
+ Rgx = _Rgt;
+ Rgy = _Rgt;
+ Rgz = _Rgz;
+ nsmoothx = (int)(6.0 * Rgx / dx);  // smoothly distribute to +- this many cells
+ nsmoothy = (int)(6.0 * Rgy / dy);
+ nsmoothz = (int)(1.5 * Rgz / dz);
+
+ std::vector<Particle>* particles =_particles;
+ std::vector<Particle>* fluids;
+ std::vector<Particle>* jets;
+
+  void jetsFiltration(std::vector<Particle>* particles){
+    for(int i = 0; i < particles.size(); i++){
+      if (sqrt(pow(particles.at(i).getPx,2) +pow(particles.at(i).getPy,2)) >= 7){
+        jets.push_back(particles.at(i));
+      }
+      else{
+        fluids.push_back(particles.at(i));
+      }
+    }
+  } 
+
+ T00 = new double**[nx];
+ T0x = new double**[nx];
+ T0y = new double**[nx];
+ T0z = new double**[nx];
+ QB = new double**[nx];
+ QE = new double**[nx];
+ for (int ix = 0; ix < nx; ix++) {
+  T00[ix] = new double*[ny];
+  T0x[ix] = new double*[ny];
+  T0y[ix] = new double*[ny];
+  T0z[ix] = new double*[ny];
+  QB[ix] = new double*[ny];
+  QE[ix] = new double*[ny];
+  for (int iy = 0; iy < ny; iy++) {
+   T00[ix][iy] = new double[nz];
+   T0x[ix][iy] = new double[nz];
+   T0y[ix][iy] = new double[nz];
+   T0z[ix][iy] = new double[nz];
+   QB[ix][iy] = new double[nz];
+   QE[ix][iy] = new double[nz];
+   for (int iz = 0; iz < nz; iz++) {
+    T00[ix][iy][iz] = 0.0;
+    T0x[ix][iy][iz] = 0.0;
+    T0y[ix][iy][iz] = 0.0;
+    T0z[ix][iy][iz] = 0.0;
+    QB[ix][iy][iz] = 0.0;
+    QE[ix][iy][iz] = 0.0;
+   }
+  }
+ }
+#ifdef TSHIFT
+ tau0 += tshift;
+#endif
+ // ---- read the events
+ nevents = 0;
+ ifstream fin(filename);
+ if (!fin.good()) {
+  cout << "I/O error with " << filename << endl;
+  exit(1);
+ }
+ int np = 0;  // particle counter
+ string line;
+ istringstream instream;
+ while (!fin.eof()) {
+  getline(fin, line);
+  instream.str(line);
+  instream.seekg(0);
+  instream.clear();
+  // Read line
+  instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
+              Py_val >> Rap_val >> Id_val >> Charge_val;
+
+  // Fill arrays
+  Tau.push_back(Tau_val);
+  X.push_back(X_val);
+  Y.push_back(Y_val);
+  Eta.push_back(Eta_val);
+  Mt.push_back(Mt_val);
+  Px.push_back(Px_val);
+  Py.push_back(Py_val);
+  Rap.push_back(Rap_val);
+  Id.push_back(Id_val);
+  Charge.push_back(Charge_val);
+
+#ifdef TSHIFT
+  Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
+                         (Tau[np] * cosh(Eta[np]) + tshift));
+  Tau[np] += tshift;
+#endif
+  if (!instream.fail())
+   np++;
+  else if (np > 0) {
+   // cout<<"readF14:instream: failure reading data\n" ;
+   // cout<<"stream = "<<instream.str()<<endl ;
+   if (nevents % 100 == 0) {
+    cout << "event = " << nevents << "  np = " << np << "\r";
+    cout << flush;
+   }
+   makeSmoothTable(np);
+   np = 0;
+
+   // Clear arrays for next event
+   Tau.clear();
+   X.clear();
+   Y.clear();
+   Eta.clear();
+   Mt.clear();
+   Px.clear();
+   Py.clear();
+   Rap.clear();
+   Id.clear();
+   Charge.clear();
+
+   nevents++;
+   // if(nevents>10000) return ;
+  }
+ }
+ if (nevents > 1){
+    cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+ }
+  
 }
