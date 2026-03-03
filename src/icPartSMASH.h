@@ -93,5 +93,5 @@ public:
 };
 
 void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);
-void jetsFiltration(std::vector<Particle>* _particles);
+
 

@@ -438,7 +438,6 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
   t = particles->front().getT(); 
   } // all particles for IC should be in now
 
-  double a = "s";
   // initialize cell values
   for (int ix = 0; ix < nx; ix++)
     for (int iy = 0; iy < ny; iy++)
@@ -552,17 +551,6 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  std::vector<Particle>* fluids;
  std::vector<Particle>* jets;
 
-  void jetsFiltration(std::vector<Particle>* particles){
-    for(int i = 0; i < particles.size(); i++){
-      if (sqrt(pow(particles.at(i).getPx,2) +pow(particles.at(i).getPy,2)) >= 7){
-        jets.push_back(particles.at(i));
-      }
-      else{
-        fluids.push_back(particles.at(i));
-      }
-    }
-  } 
-
  T00 = new double**[nx];
  T0x = new double**[nx];
  T0y = new double**[nx];
@@ -615,17 +603,19 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
               Py_val >> Rap_val >> Id_val >> Charge_val;
 
-  // Fill arrays
-  Tau.push_back(Tau_val);
-  X.push_back(X_val);
-  Y.push_back(Y_val);
-  Eta.push_back(Eta_val);
-  Mt.push_back(Mt_val);
-  Px.push_back(Px_val);
-  Py.push_back(Py_val);
-  Rap.push_back(Rap_val);
-  Id.push_back(Id_val);
-  Charge.push_back(Charge_val);
+  if(sqrt(pow(Px_val,2) + pow(Px_val,2)) >= 2){
+    Tau.push_back(Tau_val);
+    X.push_back(X_val);
+    Y.push_back(Y_val);
+    Eta.push_back(Eta_val);
+    Mt.push_back(Mt_val);
+    Px.push_back(Px_val);
+    Py.push_back(Py_val);
+    Rap.push_back(Rap_val);
+    Id.push_back(Id_val);
+    Charge.push_back(Charge_val);
+  }
+  
 
 #ifdef TSHIFT
   Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
@@ -661,7 +651,9 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   }
  }
  if (nevents > 1){
-    cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+    cout << "++ Warning: loaded " << 
+    nevents << "  initial SMASH events\n";
  }
   
 }
+
