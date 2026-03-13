@@ -409,25 +409,43 @@ void Fluid::updateM(double tau, double dt) {
          getCell(ix, iy, iz - 1)->getM(Z_) >= 1.)
       c->setDM(Z_, dt / dz / tau);
 
-     if (c->getDM(X_) == 0. && c->getDM(Y_) == 0.) {
+     if (c->getDM(X_) == 0. && c->getDM(Y_) == 0. && c->getDM(Z_) == 0.) {
+      int diagCase = 0;
+      
       if (getCell(ix + 1, iy + 1, iz)->getMaxM() >= 1. ||
           getCell(ix + 1, iy - 1, iz)->getMaxM() >= 1. ||
           getCell(ix - 1, iy + 1, iz)->getMaxM() >= 1. ||
-          getCell(ix - 1, iy - 1, iz)->getMaxM() >= 1. ||
+          getCell(ix - 1, iy - 1, iz)->getMaxM() >= 1.)
+        diagCase = 1;
           
-          getCell(ix, iy + 1, iz + 1)->getMaxM() >= 1. ||
+      if (getCell(ix, iy + 1, iz + 1)->getMaxM() >= 1. ||
           getCell(ix, iy + 1, iz - 1)->getMaxM() >= 1. ||
           getCell(ix, iy - 1, iz + 1)->getMaxM() >= 1. ||
-          getCell(ix, iy - 1, iz - 1)->getMaxM() >= 1. ||
+          getCell(ix, iy - 1, iz - 1)->getMaxM() >= 1.)
+        diagCase = 2;
           
-          getCell(ix + 1, iy, iz + 1)->getMaxM() >= 1. ||
+      if (getCell(ix + 1, iy, iz + 1)->getMaxM() >= 1. ||
           getCell(ix + 1, iy, iz - 1)->getMaxM() >= 1. ||
           getCell(ix - 1, iy, iz + 1)->getMaxM() >= 1. ||
-          getCell(ix - 1, iy, iz - 1)->getMaxM() >= 1.) {
-      
-       c->setDM(X_, 0.707 * dt / dx);
-       c->setDM(Y_, 0.707 * dt / dy);
-       c->setDM(Z_, 0.707 * dt / dz / tau);
+          getCell(ix - 1, iy, iz - 1)->getMaxM() >= 1.)
+        diagCase = 3;
+
+      switch(diagCase)
+      {
+       case 1:
+        c->setDM(X_, 0.707 * dt / dx);
+        c->setDM(Y_, 0.707 * dt / dy);
+        break;
+       case 2:
+        c->setDM(Y_, 0.707 * dt / dy);
+        c->setDM(Z_, 0.707 * dt / dz / tau);
+        break;
+       case 3:
+        c->setDM(X_, 0.707 * dt / dx);
+        c->setDM(Z_, 0.707 * dt / dz / tau);
+        break;
+        default:
+         break;
       }
      }
     }  // if
