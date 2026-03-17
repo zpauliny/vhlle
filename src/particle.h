@@ -48,7 +48,8 @@ class Particle {
      inline double getPx(void) { return px; }
      inline double getPy(void) { return py; }
      inline double getPz(void) { return pz; }
-
+     
+     inline double getPt (void) {return std::sqrt(px*px + py*py);}
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
      inline int getEventNo(void) const { return eventNo; }
      inline void energyLoss(double energyLoss0, double dt); 

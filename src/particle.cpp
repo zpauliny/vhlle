@@ -66,6 +66,8 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     gauss_norm = calculateNorm(f,R);
 }
 
+
+
 double Particle::calculateNorm(Fluid *f, double R) {
    const int nx = f->getNX();
    const int ny = f->getNY();

@@ -7,6 +7,7 @@ class Particle;
 
 class IcPartSMASH {
 private:
+ std::vector<Particle> jets;
  int nx, ny, nz, nevents;
  double xmin, xmax, ymin, ymax, zmin, zmax;
  double dx, dy, dz;
@@ -89,9 +90,10 @@ public:
  ~IcPartSMASH();
  void setIC(Fluid *f, EoS *eos);
  void setIC(Fluid *f, EoS *eos, std::deque<Particle>* particles, double &ctime, int min_particles_FO, double &ftime);
- void setIC(Fluid *f, EoS *eos, std::vector<Particle>* jets);
 };
 
 void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir);
+const std::vector<Particle>* getJets();
+
 
 

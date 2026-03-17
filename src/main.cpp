@@ -291,6 +291,7 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
+std::vector<Particle>* jets = new std::vector<Particle>();
  deque<Particle>* particles = new deque<Particle>();
  time_t start = 0, end;
  time(&start);
@@ -361,7 +362,8 @@ int main(int argc, char **argv) {
    ic->setIC(f, eos);
    delete ic;
  } else if (icModel == 6){ // SMASH IC
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0);
+  //tu musis pouzit svoj konstruktor
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, jets);
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==7){ // IC from Trento
@@ -380,10 +382,19 @@ int main(int argc, char **argv) {
   cout << "icModel = " << icModel << " not implemented\n";
  }
  cout << "IC done\n";
+ cout << "tau x y eta mt px py Rap pdg charge baryon_number strangeness\n";
+ for (Particle& p : *jets) {
+    double pt = p.getPt();
+    cout << pt << " "; 
+    cout << p.getT() << " ";
+    cout << p.getY() << " ";
+    cout << p.getX() << endl;
+ }
+         
 
  // For calculating initial anisotropy without running full hydro, uncomment following line
  //f->InitialAnisotropies(tau0) ;
-
+/*
  time_t tinit = 0;
  time(&tinit);
  float diff = difftime(tinit, start);
@@ -469,7 +480,7 @@ int main(int argc, char **argv) {
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
-
+*/
  delete f;
  delete h;
  delete eos;

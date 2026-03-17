@@ -16,6 +16,9 @@
 
 using namespace std;
 
+std::vector<Particle>* jets;
+
+
 // To make a copy of the constructor 
 
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
@@ -460,72 +463,8 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
  // fluid initialized + particles queue awaits
 }
 
-// dynamical IC: set up IC with 1st particles, others stay in queue
-// works only #ifdef CARTESIAN
-void outputCoronaParticles(std::deque<Particle>* particles, std::string outputDir) 
-{
- // sort particles by event number
-  std::vector<Particle> tempVec;
-    while (!particles->empty()) {
-        tempVec.push_back(particles->front());
-        particles->pop_front();
-    }
-  std::sort(tempVec.begin(), tempVec.end(),
-   [](const Particle &a, const Particle &b) -> bool { return a.getEventNo() < b.getEventNo(); }); 
-  for (const auto& item : tempVec) {
-        particles->push_back(item);
-    }
-
- 
-  int particle_number = particles->size();
-  int n_part = 0;
-  int n_event = 0;
-    
-    if (particle_number > 0) {
-      string filename = outputDir.c_str();
-      filename.append("/particle_lists.oscar");
-      ofstream outfile(filename.c_str());
-      outfile << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge \n";
-      outfile << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e \n";
-      outfile << "# event " <<  n_event << " out\n";
-      while (particle_number > 0)
-      {
-        Particle particle_to_dump = particles->front();
-        double t = particle_to_dump.getT();
-        double x = particle_to_dump.getX();
-        double y = particle_to_dump.getY();
-        double z = particle_to_dump.getZ();
-        double mass = particle_to_dump.getM();
-        double p0 = particle_to_dump.getE();
-        double px = particle_to_dump.getPx();
-        double py = particle_to_dump.getPy();
-        double pz = particle_to_dump.getPz();
-        int pdg = particle_to_dump.getPdg();
-        int id = 0;
-        int charge = particle_to_dump.getQ();
-        while (particle_to_dump.getEventNo() > n_event)
-        {
-          outfile << "# event " <<  n_event << " end\n";
-          n_event++;
-          outfile << "# event " <<  n_event << " out\n"; 
-        }
-        outfile << t << " " << x << " " << y << " " << z << " " << mass << " " << 
-                    p0 << " " << px << " " << py << " " << pz << " " << pdg << 
-                    " " << id << " " << charge << "\n";
-        n_part += 1;
-        particles->pop_front();
-        particle_number = particles->size();
-      }
-      outfile << "# event " <<  n_event << " end\n";
-    }
-    // check-in about the procedure
-    std::cout << n_part << " particles were left after hydro evolution.\n" <<
-                 "At the end of the run, particle queue is empty: " <<
-                 particles->empty() << "\n";
-}
-
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
-                         double _tau0, std::vector<Particle>* _particles) {
+                         double _tau0, std::vector<Particle>* particles) {
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -546,10 +485,6 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  nsmoothx = (int)(6.0 * Rgx / dx);  // smoothly distribute to +- this many cells
  nsmoothy = (int)(6.0 * Rgy / dy);
  nsmoothz = (int)(1.5 * Rgz / dz);
-
- std::vector<Particle>* particles =_particles;
- std::vector<Particle>* fluids;
- std::vector<Particle>* jets;
 
  T00 = new double**[nx];
  T0x = new double**[nx];
@@ -600,60 +535,123 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   instream.seekg(0);
   instream.clear();
   // Read line
-  instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
-              Py_val >> Rap_val >> Id_val >> Charge_val;
 
-  if(sqrt(pow(Px_val,2) + pow(Px_val,2)) >= 2){
-    Tau.push_back(Tau_val);
-    X.push_back(X_val);
-    Y.push_back(Y_val);
-    Eta.push_back(Eta_val);
-    Mt.push_back(Mt_val);
-    Px.push_back(Px_val);
-    Py.push_back(Py_val);
-    Rap.push_back(Rap_val);
-    Id.push_back(Id_val);
-    Charge.push_back(Charge_val);
-  }
-  
+  int i = 0;  // example index
+    //std::string filename = "/home/student00/simulation/smash/build/SMASH_IC_For_vHLLE.dat";
+    std::ifstream file(filename);
+    std::string line;
+    
+    while (std::getline(file, line)) {
+      int nEvents = -1; 
+      if (line.find("start") != std::string::npos) {
+        nEvents++;
+        continue;
+      }
 
-#ifdef TSHIFT
-  Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
+      if (line.find('#') != std::string::npos)
+        continue;
+
+      std::stringstream ss(line);
+      std::vector<std::string> cols;
+      std::string value;
+
+      while (ss >> value)
+          cols.push_back(value);
+
+      if (cols.size() < 10)
+          continue;
+
+      double R = 1.0;
+      double rap = std::stoi(cols[7]);
+      int pdg_code = std::stoi(cols[8]);
+      int Q = std::stoi(cols[9]);
+      int B = std::stoi(cols[10]);
+      int S = std::stoi(cols[11]);
+
+      double tau = std::stod(cols[0]);
+      double x = std::stod(cols[1]);
+      double y = std::stod(cols[2]);
+      double eta = std::stod(cols[3]);
+      double mt = std::stod(cols[4]);
+      double r = std::sqrt(x*x + y*y);
+
+      double E = std::stod(cols[4]) * std::cosh(std::stod(cols[7]));
+      double phi = std::atan2(y, x);
+
+      double px = std::stod(cols[5]);
+      double py = std::stod(cols[6]);
+      double pT = std::sqrt(px*px + py*py);
+      double pz = pT * sinh(eta);
+      double mT = std::sqrt(E*E - pz*pz);
+      //std::vector<double> rapids;
+
+      if (pT >= 2){
+        Particle p(f, R, B, Q, S, tau, x, y, eta, E, px, py, pT, pdg_code, nEvents);
+        jets.push_back(p);
+        //rapids.push_back(rap);
+      }
+      else{
+        // Fill arrays
+        // premenit na vlastne premenne
+      Tau.push_back(tau);
+      X.push_back(x);
+      Y.push_back(y);
+      Eta.push_back(eta);
+      Mt.push_back(mT);
+      Px.push_back(px);
+      Py.push_back(py);
+      Rap.push_back(rap);
+      Id.push_back(pdg_code);
+      Charge.push_back(Q);
+
+    #ifdef TSHIFT
+    Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
                          (Tau[np] * cosh(Eta[np]) + tshift));
-  Tau[np] += tshift;
-#endif
-  if (!instream.fail())
-   np++;
-  else if (np > 0) {
-   // cout<<"readF14:instream: failure reading data\n" ;
-   // cout<<"stream = "<<instream.str()<<endl ;
-   if (nevents % 100 == 0) {
-    cout << "event = " << nevents << "  np = " << np << "\r";
-    cout << flush;
-   }
-   makeSmoothTable(np);
-   np = 0;
+    Tau[np] += tshift;
+    #endif
+    if (!instream.fail())
+       np++;
+    else if (np > 0) {
+    // cout<<"readF14:instream: failure reading data\n" ;
+    // cout<<"stream = "<<instream.str()<<endl ;
+    if (nevents % 100 == 0) {
+      cout << "event = " << nevents << "  np = " << np << "\r";
+      cout << flush;
+    }
+    makeSmoothTable(np);
+    np = 0;
 
-   // Clear arrays for next event
-   Tau.clear();
-   X.clear();
-   Y.clear();
-   Eta.clear();
-   Mt.clear();
-   Px.clear();
-   Py.clear();
-   Rap.clear();
-   Id.clear();
-   Charge.clear();
+    // Clear arrays for next event
+    Tau.clear();
+    X.clear();
+    Y.clear();
+    Eta.clear();
+    Mt.clear();
+    Px.clear();
+    Py.clear();
+    Rap.clear();
+    Id.clear();
+    Charge.clear();
 
-   nevents++;
-   // if(nevents>10000) return ;
+    nevents++;
+   
+      }
+    }
   }
+
+    file.close();
  }
- if (nevents > 1){
-    cout << "++ Warning: loaded " << 
-    nevents << "  initial SMASH events\n";
- }
-  
+ if (nevents > 1)
+  cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+
 }
+
+const std::vector<Particle>* getJets(){
+    return jets;
+}
+
+
+
+
+
 
