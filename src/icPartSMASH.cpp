@@ -16,7 +16,6 @@
 
 using namespace std;
 
-std::vector<Particle>* jets;
 
 
 // To make a copy of the constructor 
@@ -464,7 +463,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
 }
 
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
-                         double _tau0, std::vector<Particle>* particles) {
+                         double _tau0, std::vector<Particle>* jets) {
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -538,56 +537,56 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
   int i = 0;  // example index
     //std::string filename = "/home/student00/simulation/smash/build/SMASH_IC_For_vHLLE.dat";
-    std::ifstream file(filename);
-    std::string line;
     
-    while (std::getline(file, line)) {
+    string line;
+    
+    while (getline(fin, line)) {
       int nEvents = -1; 
-      if (line.find("start") != std::string::npos) {
+      if (line.find("start") != string::npos) {
         nEvents++;
         continue;
       }
 
-      if (line.find('#') != std::string::npos)
+      if (line.find('#') != string::npos)
         continue;
 
-      std::stringstream ss(line);
-      std::vector<std::string> cols;
-      std::string value;
+      stringstream ss(line);
+      vector<std::string> cols;
+      string value;
 
       while (ss >> value)
           cols.push_back(value);
 
-      if (cols.size() < 10)
+      if (cols.size() <= 12)
           continue;
 
       double R = 1.0;
-      double rap = std::stoi(cols[7]);
-      int pdg_code = std::stoi(cols[8]);
-      int Q = std::stoi(cols[9]);
-      int B = std::stoi(cols[10]);
-      int S = std::stoi(cols[11]);
+      double rap = stoi(cols[7]);
+      int pdg_code = stoi(cols[8]);
+      int Q = stoi(cols[9]);
+      int B = stoi(cols[10]);
+      int S = stoi(cols[11]);
 
-      double tau = std::stod(cols[0]);
-      double x = std::stod(cols[1]);
-      double y = std::stod(cols[2]);
-      double eta = std::stod(cols[3]);
-      double mt = std::stod(cols[4]);
-      double r = std::sqrt(x*x + y*y);
+      double tau = stod(cols[0]);
+      double x = stod(cols[1]);
+      double y = stod(cols[2]);
+      double eta = stod(cols[3]);
+      double mt = stod(cols[4]);
+      double r = sqrt(x*x + y*y);
 
-      double E = std::stod(cols[4]) * std::cosh(std::stod(cols[7]));
-      double phi = std::atan2(y, x);
+      double E = stod(cols[4]) * cosh(stod(cols[7]));
+      double phi = atan2(y, x);
 
-      double px = std::stod(cols[5]);
-      double py = std::stod(cols[6]);
-      double pT = std::sqrt(px*px + py*py);
+      double px = stod(cols[5]);
+      double py = stod(cols[6]);
+      double pT = sqrt(px*px + py*py);
       double pz = pT * sinh(eta);
-      double mT = std::sqrt(E*E - pz*pz);
+      double mT = sqrt(E*E - pz*pz);
       //std::vector<double> rapids;
 
-      if (pT >= 2){
-        Particle p(f, R, B, Q, S, tau, x, y, eta, E, px, py, pT, pdg_code, nEvents);
-        jets.push_back(p);
+      if (pT >= 0){
+        jets->emplace_back(f, R, B, Q, S, tau, x, y, eta, E, px, py, pT, pdg_code, nEvents);
+        cout << "jet has been added\n";
         //rapids.push_back(rap);
       }
       else{
@@ -639,16 +638,13 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
     }
   }
 
-    file.close();
  }
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
 
 }
 
-const std::vector<Particle>* getJets(){
-    return jets;
-}
+
 
 
 

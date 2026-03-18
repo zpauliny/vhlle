@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
-std::vector<Particle>* jets = new std::vector<Particle>();
+ std::vector<Particle>* jets = new std::vector<Particle>();
  deque<Particle>* particles = new deque<Particle>();
  time_t start = 0, end;
  time(&start);
@@ -382,6 +382,7 @@ std::vector<Particle>* jets = new std::vector<Particle>();
   cout << "icModel = " << icModel << " not implemented\n";
  }
  cout << "IC done\n";
+ cout << "jets pointer = " << jets << endl;
  cout << "tau x y eta mt px py Rap pdg charge baryon_number strangeness\n";
  for (Particle& p : *jets) {
     double pt = p.getPt();
@@ -390,6 +391,7 @@ std::vector<Particle>* jets = new std::vector<Particle>();
     cout << p.getY() << " ";
     cout << p.getX() << endl;
  }
+ cout << "jets size = " << jets->size() << endl;
          
 
  // For calculating initial anisotropy without running full hydro, uncomment following line
