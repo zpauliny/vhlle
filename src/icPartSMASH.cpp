@@ -464,6 +464,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
 
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
                          double _tau0, std::vector<Particle>* jets) {
+ this->jets = jets;
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -521,27 +522,20 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
+ string line; 
+ istringstream instream;
  if (!fin.good()) {
   cout << "I/O error with " << filename << endl;
   exit(1);
  }
  int np = 0;  // particle counter
- string line;
- istringstream instream;
- while (!fin.eof()) {
-  getline(fin, line);
-  instream.str(line);
-  instream.seekg(0);
-  instream.clear();
+ 
   // Read line
-
+  int nEvents = -1;
   int i = 0;  // example index
-    //std::string filename = "/home/student00/simulation/smash/build/SMASH_IC_For_vHLLE.dat";
-    
-    string line;
-    
+    //std::string filename = "/home/student00/simulation/smash/build/SMASH_IC_For_vHLLE.dat"; 
     while (getline(fin, line)) {
-      int nEvents = -1; 
+       
       if (line.find("start") != string::npos) {
         nEvents++;
         continue;
@@ -562,26 +556,38 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
       double R = 1.0;
       double rap = stoi(cols[7]);
+      //cout << rap << endl;
       int pdg_code = stoi(cols[8]);
+      //cout << pdg_code << endl;
       int Q = stoi(cols[9]);
+      //cout << Q << endl;
       int B = stoi(cols[10]);
+      //cout << B << endl;
       int S = stoi(cols[11]);
+      //cout << S << endl;
 
       double tau = stod(cols[0]);
+      //cout << tau << endl;
       double x = stod(cols[1]);
+      //cout << x << endl;
       double y = stod(cols[2]);
+      //cout << y << endl;
       double eta = stod(cols[3]);
-      double mt = stod(cols[4]);
+      //cout << eta << endl;
+      double mT = stod(cols[4]);
+      //cout << mT << endl;
       double r = sqrt(x*x + y*y);
+      //cout << r << endl;
 
       double E = stod(cols[4]) * cosh(stod(cols[7]));
-      double phi = atan2(y, x);
+      //cout << E << endl;
 
       double px = stod(cols[5]);
+      //cout << px << endl;
       double py = stod(cols[6]);
+      // << py << endl;
       double pT = sqrt(px*px + py*py);
-      double pz = pT * sinh(eta);
-      double mT = sqrt(E*E - pz*pz);
+      //cout << pT << endl;
       //std::vector<double> rapids;
 
       if (pT >= 0){
@@ -634,7 +640,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
     nevents++;
    
-      }
+      
     }
   }
 

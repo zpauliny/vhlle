@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
  TransportCoeff *trcoeff;
  Fluid *f;
  Hydro *h;
- std::vector<Particle>* jets = new std::vector<Particle>();
+ vector<Particle>* jets = new vector<Particle>();
  deque<Particle>* particles = new deque<Particle>();
  time_t start = 0, end;
  time(&start);
@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
  cout << "IC done\n";
  cout << "jets pointer = " << jets << endl;
  cout << "tau x y eta mt px py Rap pdg charge baryon_number strangeness\n";
- for (Particle& p : *jets) {
+ /*for (Particle& p : *jets) {
     double pt = p.getPt();
     cout << pt << " "; 
     cout << p.getT() << " ";

@@ -7,6 +7,7 @@ class Particle;
 
 class IcPartSMASH {
 private:
+std::vector<Particle>* jets;
  int nx, ny, nz, nevents;
  double xmin, xmax, ymin, ymax, zmin, zmax;
  double dx, dy, dz;
