@@ -1125,7 +1125,11 @@ void Hydro::performStep(void) {
 void Hydro::addParticles(deque<Particle>* particles) {
  //==== particles coming in ====
  double particle_t = particles->front().getT();
+ #ifdef CARTESIAN
  double current_t = t;
+ #else
+ double current_t = tau;
+ #endif
  while (particle_t < current_t) {
    if (particles->size() > 0) {
     Particle particleToInject = particles->front();
