@@ -353,6 +353,7 @@ void IcPartSMASH::makeSmoothTable(int npart) {
 void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
  double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
+ cout << "inside setIC \n";
  for (int ix = 0; ix < nx; ix++)
   for (int iy = 0; iy < ny; iy++)
    for (int iz = 0; iz < nz; iz++) {
@@ -464,7 +465,7 @@ void IcPartSMASH::setIC(Fluid* f, EoS* eos, deque<Particle>* particles, double &
 
 IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rgz,
                          double _tau0, std::vector<Particle>* jets) {
- this->jets = jets;
+ //this->jets = jets;
  nx = f->getNX();
  ny = f->getNY();
  nz = f->getNZ();
@@ -522,132 +523,83 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
- string line; 
- istringstream instream;
  if (!fin.good()) {
   cout << "I/O error with " << filename << endl;
   exit(1);
  }
+
+ double R = 1.0;
  int np = 0;  // particle counter
- 
+ string line;
+ istringstream instream;
+ while (!fin.eof()) {
+  getline(fin, line);
+  instream.str(line);
+  instream.seekg(0);
+  instream.clear();
   // Read line
-  int nEvents = -1;
-  int i = 0;  // example index
-    //std::string filename = "/home/student00/simulation/smash/build/SMASH_IC_For_vHLLE.dat"; 
-    while (getline(fin, line)) {
-       
-      if (line.find("start") != string::npos) {
-        nEvents++;
-        continue;
-      }
+  instream >> Tau_val >> X_val >> Y_val >> Eta_val >> Mt_val >> Px_val >>
+              Py_val >> Rap_val >> Id_val >> Charge_val >> Baryon_val >> Strangeness_val;
 
-      if (line.find('#') != string::npos)
-        continue;
-
-      stringstream ss(line);
-      vector<std::string> cols;
-      string value;
-
-      while (ss >> value)
-          cols.push_back(value);
-
-      if (cols.size() <= 12)
-          continue;
-
-      double R = 1.0;
-      double rap = stoi(cols[7]);
-      //cout << rap << endl;
-      int pdg_code = stoi(cols[8]);
-      //cout << pdg_code << endl;
-      int Q = stoi(cols[9]);
-      //cout << Q << endl;
-      int B = stoi(cols[10]);
-      //cout << B << endl;
-      int S = stoi(cols[11]);
-      //cout << S << endl;
-
-      double tau = stod(cols[0]);
-      //cout << tau << endl;
-      double x = stod(cols[1]);
-      //cout << x << endl;
-      double y = stod(cols[2]);
-      //cout << y << endl;
-      double eta = stod(cols[3]);
-      //cout << eta << endl;
-      double mT = stod(cols[4]);
-      //cout << mT << endl;
-      double r = sqrt(x*x + y*y);
-      //cout << r << endl;
-
-      double E = stod(cols[4]) * cosh(stod(cols[7]));
-      //cout << E << endl;
-
-      double px = stod(cols[5]);
-      //cout << px << endl;
-      double py = stod(cols[6]);
-      // << py << endl;
-      double pT = sqrt(px*px + py*py);
-      //cout << pT << endl;
-      //std::vector<double> rapids;
-
-      if (pT >= 0){
-        jets->emplace_back(f, R, B, Q, S, tau, x, y, eta, E, px, py, pT, pdg_code, nEvents);
+  double pT = sqrt(Px_val * Px_val + Py_val * Py_val);
+  double E = Mt_val * cosh(Rap_val);            
+  if (pT >= 0.5){
+        cout << "JET! " << pT << endl;
+        jets->emplace_back(f, R, Baryon_val, Charge_val, Strangeness_val, Tau_val, 
+                           X_val, Y_val, Eta_val, E, Px_val, Py_val, Rap_val, Id_val, nevents);
         cout << "jet has been added\n";
-        //rapids.push_back(rap);
-      }
-      else{
-        // Fill arrays
-        // premenit na vlastne premenne
-      Tau.push_back(tau);
-      X.push_back(x);
-      Y.push_back(y);
-      Eta.push_back(eta);
-      Mt.push_back(mT);
-      Px.push_back(px);
-      Py.push_back(py);
-      Rap.push_back(rap);
-      Id.push_back(pdg_code);
-      Charge.push_back(Q);
-
-    #ifdef TSHIFT
-    Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
-                         (Tau[np] * cosh(Eta[np]) + tshift));
-    Tau[np] += tshift;
-    #endif
-    if (!instream.fail())
-       np++;
-    else if (np > 0) {
-    // cout<<"readF14:instream: failure reading data\n" ;
-    // cout<<"stream = "<<instream.str()<<endl ;
-    if (nevents % 100 == 0) {
-      cout << "event = " << nevents << "  np = " << np << "\r";
-      cout << flush;
-    }
-    makeSmoothTable(np);
-    np = 0;
-
-    // Clear arrays for next event
-    Tau.clear();
-    X.clear();
-    Y.clear();
-    Eta.clear();
-    Mt.clear();
-    Px.clear();
-    Py.clear();
-    Rap.clear();
-    Id.clear();
-    Charge.clear();
-
-    nevents++;
-   
-      
-    }
   }
 
+  else {
+  // Fill arrays
+  cout << "Fill arrays happened" << endl;
+  Tau.push_back(Tau_val);
+  X.push_back(X_val);
+  Y.push_back(Y_val);
+  Eta.push_back(Eta_val);
+  Mt.push_back(Mt_val);
+  Px.push_back(Px_val);
+  Py.push_back(Py_val);
+  Rap.push_back(Rap_val);
+  Id.push_back(Id_val);
+  Charge.push_back(Charge_val);
+  }
+#ifdef TSHIFT
+  Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
+                         (Tau[np] * cosh(Eta[np]) + tshift));
+  Tau[np] += tshift;
+#endif
+  if (!instream.fail())
+   np++;
+  else if (np > 0) {
+   // cout<<"readF14:instream: failure reading data\n" ;
+   // cout<<"stream = "<<instream.str()<<endl ;
+   if (nevents % 100 == 0) {
+    cout << "event = " << nevents << "  np = " << np << "\r";
+    cout << flush;
+   }
+   cout << "Making a smooth table" << endl;
+   makeSmoothTable(np);
+   np = 0;
+
+   // Clear arrays for next event
+   Tau.clear();
+   X.clear();
+   Y.clear();
+   Eta.clear();
+   Mt.clear();
+   Px.clear();
+   Py.clear();
+   Rap.clear();
+   Id.clear();
+   Charge.clear();
+
+   nevents++;
+   // if(nevents>10000) return ;
+  }
  }
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
-
 }
 
 
