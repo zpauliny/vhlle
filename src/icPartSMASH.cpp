@@ -196,8 +196,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double gaussian_sigma,
    }
   }
  }
-
- //cout << "I am in the class \n";                          
+                        
  // ---- read the events
  nevents = 0;
  ifstream fin(filename);
@@ -353,7 +352,6 @@ void IcPartSMASH::makeSmoothTable(int npart) {
 void IcPartSMASH::setIC(Fluid* f, EoS* eos) {
  double E = 0.0, Px = 0.0, Py = 0.0, Pz = 0.0, Nb = 0.0, Nq = 0.0, S = 0.0;
  double Q[7], e, p, nb, nq, ns, vx, vy, vz;
- cout << "inside setIC \n";
  for (int ix = 0; ix < nx; ix++)
   for (int iy = 0; iy < ny; iy++)
    for (int iz = 0; iz < nz; iz++) {
@@ -483,8 +481,8 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  Rgx = _Rgt;
  Rgy = _Rgt;
  Rgz = _Rgz;
- nsmoothx = (int)(6.0 * Rgx / dx);  // smoothly distribute to +- this many cells
- nsmoothy = (int)(6.0 * Rgy / dy);
+ nsmoothx = (int)(4.0 * Rgx / dx);  // smoothly distribute to +- this many cells
+ nsmoothy = (int)(4.0 * Rgy / dy);
  nsmoothz = (int)(1.5 * Rgz / dz);
 
  T00 = new double**[nx];
@@ -532,6 +530,12 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  int np = 0;  // particle counter
  string line;
  istringstream instream;
+ getline(fin, line);
+ getline(fin, line);
+ instream.str(line);
+ instream.seekg(0);
+ instream.clear();
+ 
  while (!fin.eof()) {
   getline(fin, line);
   instream.str(line);
@@ -543,34 +547,34 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
 
   double pT = sqrt(Px_val * Px_val + Py_val * Py_val);
   double E = Mt_val * cosh(Rap_val);            
-  if (pT >= 0.5){
-        cout << "JET! " << pT << endl;
-        jets->emplace_back(f, R, Baryon_val, Charge_val, Strangeness_val, Tau_val, 
-                           X_val, Y_val, Eta_val, E, Px_val, Py_val, Rap_val, Id_val, nevents);
-        cout << "jet has been added\n";
-  }
+  
+  if (!instream.fail()) {
+   if (pT >= 0.5){
+    jets->emplace_back(f, R, Baryon_val, Charge_val, Strangeness_val, Tau_val, 
+                       X_val, Y_val, Eta_val, E, Px_val, Py_val, Rap_val, Id_val, nevents);
+    cout << "jet has been added\n";
+   }
 
-  else {
-  // Fill arrays
-  cout << "Fill arrays happened" << endl;
-  Tau.push_back(Tau_val);
-  X.push_back(X_val);
-  Y.push_back(Y_val);
-  Eta.push_back(Eta_val);
-  Mt.push_back(Mt_val);
-  Px.push_back(Px_val);
-  Py.push_back(Py_val);
-  Rap.push_back(Rap_val);
-  Id.push_back(Id_val);
-  Charge.push_back(Charge_val);
-  }
-#ifdef TSHIFT
-  Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
+   else {
+    // Fill arrays
+    Tau.push_back(Tau_val);
+    X.push_back(X_val);
+    Y.push_back(Y_val);
+    Eta.push_back(Eta_val);
+    Mt.push_back(Mt_val);
+    Px.push_back(Px_val);
+    Py.push_back(Py_val);
+    Rap.push_back(Rap_val);
+    Id.push_back(Id_val);
+    Charge.push_back(Charge_val);
+    np++;
+    }
+   #ifdef TSHIFT
+   Eta[np] = TMath::ATanH(Tau[np] * sinh(Eta[np]) /
                          (Tau[np] * cosh(Eta[np]) + tshift));
-  Tau[np] += tshift;
-#endif
-  if (!instream.fail())
-   np++;
+   Tau[np] += tshift;
+   #endif
+  }
   else if (np > 0) {
    // cout<<"readF14:instream: failure reading data\n" ;
    // cout<<"stream = "<<instream.str()<<endl ;
@@ -600,6 +604,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
  }
  if (nevents > 1)
   cout << "++ Warning: loaded " << nevents << "  initial SMASH events\n";
+ else cout << "nevents: " << nevents << endl;
 }
 
 

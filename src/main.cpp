@@ -363,7 +363,7 @@ int main(int argc, char **argv) {
    delete ic;
  } else if (icModel == 6){ // SMASH IC
   //tu musis pouzit svoj konstruktor
-   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, tau0, jets);
+   IcPartSMASH *ic = new IcPartSMASH(f, isInputFile.c_str(), Rgt, Rgz, 0.5, jets);
    ic->setIC(f, eos);
    delete ic;
  } else if(icModel==7){ // IC from Trento
