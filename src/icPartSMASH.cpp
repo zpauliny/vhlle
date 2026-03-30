@@ -546,12 +546,18 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
               Py_val >> Rap_val >> Id_val >> Charge_val >> Baryon_val >> Strangeness_val;
 
   double pT = sqrt(Px_val * Px_val + Py_val * Py_val);
-  double E = Mt_val * cosh(Rap_val);            
+  double E = Mt_val * cosh(Rap_val);
+  double t = Tau_val * cosh(Eta_val);
+  double z = Tau_val * sinh(Eta_val);
+  double pz = E * tanh(Rap_val);
+  double p_tau = (t*E - z*pz)/Tau_val;
+  double p_eta = (z*E + z*pz)/pow(Tau_val,2);            
   
   if (!instream.fail()) {
-   if (pT >= 0.5){
+   if (pT >= 2.0){ 
+    //vloz sem
     jets->emplace_back(f, R, Baryon_val, Charge_val, Strangeness_val, Tau_val, 
-                       X_val, Y_val, Eta_val, E, Px_val, Py_val, Rap_val, Id_val, nevents);
+                       X_val, Y_val, Eta_val, p_tau, Px_val, Py_val, p_eta, Id_val, nevents);
     cout << "jet has been added\n";
    }
 

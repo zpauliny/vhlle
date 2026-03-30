@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
  cout << "IC done\n";
  cout << "jets pointer = " << jets << endl;
  cout << "tau x y eta mt px py Rap pdg charge baryon_number strangeness\n";
- /*for (Particle& p : *jets) {
+ for (Particle& p : *jets) {
     double pt = p.getPt();
     cout << pt << " "; 
     cout << p.getT() << " ";
