@@ -5,6 +5,9 @@
 
 #include "fld.h"
 #include "particle.h"
+#include "cll.h"
+#include "eos.h"
+#include "rmn.h"
 
 using namespace std;
 
@@ -27,7 +30,7 @@ Particle::Particle(){
 }
 
 Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x,
-      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eventNo){
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eentNo){
     B = _B;
     Q = _Q;
     S = _S;
@@ -42,7 +45,7 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     py = _py;
     pz = _pz;
 
-    eventNo = _eventNo;
+    eventNo = _eentNo;
     R = _R;
     scale = 1.0;
 
@@ -132,23 +135,29 @@ double Particle::getWeight(int ix, int iy, int iz, Fluid *f,
 
    return getWeight(xdiff, ydiff, zdiff);
 }
-void Particle::energyLoss(double energyLoss0, double dt){
-   double p = sqrt(pow(px,2) + pow(py,2) + pow(pz,2));
-   const double m = pow(e,2) - pow(m,2);
 
-   double phi = std::asin(py/px);
-   double theta = std::acos(pz/p);
+void Particle::energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos){
+   double p = sqrt(px*px + py*py + pz*pz);
+    double m = sqrt(max(0.0, e*e - px*px - py*py - pz*pz));
 
-   double v  = sqrt(p/e);
-   double dx =  v * cos(phi) * sin(theta) * dt;
-   double dy =  v * sin(phi) * sin(theta) * dt;
-   double dz =  v * cos(theta) * dt;
-   x += dx;
-   y += dy;
-   z += dz;
-   double dr = sqrt(pow(dx,2) + pow(dy,2) + pow(dz,2));
-   double de = energyLoss0 * dr;
-   e -= de;
-   p = sqrt(pow(e,2) - pow(m,2));
+    Cell* myCell = f->getCell(ixc, iyc, izc);
+    double Q[7];
+    myCell->getQ(Q);
+
+    double e_cell, p_cell, nb, nq, ns, vx, vy, vz;
+    transformPV(eos, Q, e_cell, p_cell, nb, nq, ns, vx, vy, vz);
+
+    double phi = atan2(py, px);
+    double theta = acos(clamp(pz / p, -1.0, 1.0));
+
+    double u = sqrt(p / e);
+    double dx = u * cos(phi) * sin(theta) * dt;
+    double dy = u * sin(phi) * sin(theta) * dt;
+    double dz = u * cos(theta) * dt;
+    x += dx; y += dy; z += dz;
+
+    double dr = sqrt(dx*dx + dy*dy + dz*dz);
+    e -= energyLoss0 * dr;
+    p = sqrt(max(0.0, e*e - m*m));
 }
 
