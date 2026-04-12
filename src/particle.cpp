@@ -136,7 +136,7 @@ double Particle::getWeight(int ix, int iy, int iz, Fluid *f,
    return getWeight(xdiff, ydiff, zdiff);
 }
 
-void Particle::energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos){
+void Particle::energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos, double* dp){
    double p = sqrt(px*px + py*py + pz*pz);
     double m = sqrt(max(0.0, e*e - px*px - py*py - pz*pz));
 
@@ -147,15 +147,30 @@ void Particle::energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos){
     double e_cell, p_cell, nb, nq, ns, vx, vy, vz;
     transformPV(eos, Q, e_cell, p_cell, nb, nq, ns, vx, vy, vz);
 
+    double tau = t;
+    double p_eta = pz;
+    double p_tau = e; 
+    double gamma = 1;
+    double E_lrf = p_tau*gamma - px*vx - py*vy - p_eta*vz;
+    double p_lrf = sqrt(E_lrf*E_lrf - m*m);
+    double dp_tau = energyLoss0 * dt * (p_tau - E_lrf*gamma) / p_lrf;
+    double dp_x = energyLoss0 * dt * (p_eta - E_lrf*vx) / p_lrf;
+    double dp_y = energyLoss0 * dt * (p_eta - E_lrf*vy) / p_lrf;
+    double dp_z = energyLoss0 * dt * (p_eta - E_lrf*vz) / p_lrf;
+
+   if (dp) {
+       dp[0] = dp_x;
+       dp[1] = dp_y;
+       dp[2] = dp_z;
+    }
     double phi = atan2(py, px);
-    double theta = acos(clamp(pz / p, -1.0, 1.0));
 
     double u = sqrt(p / e);
-    double dx = u * cos(phi) * sin(theta) * dt;
-    double dy = u * sin(phi) * sin(theta) * dt;
-    double dz = u * cos(theta) * dt;
+    double dx = vx * dt;
+    double dy = vy * dt;
+    double dz = vz * dt;
     x += dx; y += dy; z += dz;
-
+   
     double dr = sqrt(dx*dx + dy*dy + dz*dz);
     e -= energyLoss0 * dr;
     p = sqrt(max(0.0, e*e - m*m));

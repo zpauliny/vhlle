@@ -392,6 +392,24 @@ int main(int argc, char **argv) {
     cout << p.getX() << endl;
  }
  cout << "jets size = " << jets->size() << endl;
+
+ double t = 0;
+ double x = 0;
+ double y = 0;
+ double z = 0;
+ double e = 0;
+ double px = 0;
+ double py = 0;
+ double pz = 0;
+
+ cout << "Starting energyLoss loop" << endl;  // Debug: Confirm loop start
+ Particle p(f, 0.5, 0, 0, 0, t, x, y, z, e, px, py, pz, 2112, 0);
+for (int i = 0; i < 10; i++) {
+ double dp[3] = {0.0, 0.0, 0.0};
+  p.energyLoss(0.1, 0.01, f, eos, dp);
+  cout << p.getT() << " " << p.getX() << " " << p.getY() << " " << p.getZ() << " " << p.getE()
+       << " dp_x=" << dp[0] << " dp_y=" << dp[1] << " dp_z=" << dp[2] << endl;
+}
          
 
  // For calculating initial anisotropy without running full hydro, uncomment following line
