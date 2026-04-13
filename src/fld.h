@@ -69,4 +69,5 @@ public:
  void InitialAnisotropies(double tau0);
 
  void addParticle(Particle _particle);
+ void addJet(Particle _particle);
 };

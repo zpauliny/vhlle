@@ -1229,5 +1229,49 @@ void Fluid::addParticle(Particle _particle) {
         cout << "Fluid::addParticle: NaN/inf\n" ;
       }
       getCell(ix,iy,iz)->addParticleSource(source);
- }
+     
+  }
 }
+
+ void Fluid::addJet(Particle _particle) {
+ double energyLoss0 = 1.0; 
+ double dt = 1.0;
+ Fluid* f;
+ EoS* eos;
+ double* dp;
+ double source[7] = {0.};
+ double dv = dx * dy * dz;
+ // where to smooth the particle out
+ int ixc = _particle.getIxc();
+ int smoothx = _particle.getNsmoothX();
+ int iyc = _particle.getIyc();
+ int smoothy = _particle.getNsmoothY();
+ int izc = _particle.getIzc();
+ int smoothz = _particle.getNsmoothZ();
+ const double scale = _particle.getScale();
+ 
+ for (int ix = ixc - smoothx; ix < ixc + smoothx + 1; ix++) 
+  for (int iy = iyc - smoothy; iy < iyc + smoothy + 1; iy++) 
+   for (int iz = izc - smoothz; iz < izc + smoothz + 1; iz++) 
+     if (ix > 0 && ix < nx && iy > 0 && iy < ny && iz > 0 && iz < nz) {
+      
+      const double xdiff = _particle.getX() - (minx + ix * dx);
+      const double ydiff = _particle.getY() - (miny + iy * dy);
+      const double zdiff = _particle.getZ() - (minz + iz * dz);
+
+      double weight = _particle.getWeight(xdiff, ydiff, zdiff);
+      _particle.energyLoss(energyLoss0, dt, f, eos, dp);
+      source[0] = dp[0] * weight * scale / dv;
+      source[1] = dp[1] * weight * scale / dv;
+      source[2] = dp[2] * weight * scale / dv;
+      source[3] = dp[3] * weight * scale / dv;
+      source[4] = 0;
+      source[5] = 0;
+      if(isnan(source[0]) or isinf(source[0])) {
+        cout << "Fluid::addJet: NaN/inf\n" ;
+      }
+      getCell(ix,iy,iz)->addParticleSource(source);
+   }
+  } 
+
+

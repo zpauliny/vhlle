@@ -61,4 +61,5 @@ public:
  #endif
  // adds sources from incoming particles into the hydro
  void addParticles(std::deque<Particle>* particles);
+ void addJets (std::vector<Particle>* jets);
 };
