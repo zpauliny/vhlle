@@ -1152,29 +1152,19 @@ void Hydro::addParticles(deque<Particle>* particles) {
    
 void Hydro::addJets(std::vector<Particle>* jets) {
  //==== jets coming in ====
- double particle_t = jets->front().getT();
  #ifdef CARTESIAN
  double current_t = t;
  #else
  double current_t = tau;
  #endif
- while (particle_t < current_t) {
-   if (jets->size() > 0) {
-    Particle particleToInject = jets->front();
-    //cout << "particle at t, e:\n";
-    //cout << particleToInject.getT() << " " << particleToInject.getE() << endl;
-    f->addJet(particleToInject);
-    jets->erase(jets->begin());
-    //cout << "particles in queue: " << particles->size() << endl;
-    if (jets->size() > 0) particle_t = jets->front().getT();
-    else particle_t = 1000.;
-   } 
- }
+ for (auto& jet_to_add : *jets) {
+  f->addJet(jet_to_add);
+    // use elem
+ } 
  for (int ix = 0; ix < f->getNX(); ix++)
   for (int iy = 0; iy < f->getNY(); iy++)
    for (int iz = 0; iz < f->getNZ(); iz++) {
     f->getCell(ix, iy, iz)->updateByParticleSource();
     f->getCell(ix, iy, iz)->clearParticleSource();
    } 
-
 }
