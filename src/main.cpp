@@ -414,7 +414,7 @@ for (int i = 0; i < 10; i++) {
 
  // For calculating initial anisotropy without running full hydro, uncomment following line
  //f->InitialAnisotropies(tau0) ;
-/*
+
  time_t tinit = 0;
  time(&tinit);
  float diff = difftime(tinit, start);
@@ -470,6 +470,8 @@ for (int i = 0; i < 10; i++) {
     if (particles->size() > 0) h->addParticles(particles);
   }
 
+  if (jets->size() > 0) h->addJets(jets);
+
   if ((ctime > timeInitFO) && (nelements>0)) {
     nelements = f->outputSurface(ctime);
     if (!corona_was_output) {
@@ -483,7 +485,7 @@ for (int i = 0; i < 10; i++) {
   {
     if (icModel == 9)
     {
-      outputCoronaParticles(particles, outputDir);
+      //outputCoronaParticles(particles, outputDir);
     }
     break;
   }
@@ -500,10 +502,11 @@ for (int i = 0; i < 10; i++) {
  time(&end);
  float diff2 = difftime(end, start);
  cout << "Execution time = " << diff2 << " [sec]" << endl;
-*/
+
  delete f;
  delete h;
  delete eos;
  delete eosH;
  delete particles;
+ delete jets;
 }
