@@ -554,8 +554,7 @@ IcPartSMASH::IcPartSMASH(Fluid* f, const char* filename, double _Rgt, double _Rg
   double p_eta = (z*E + z*pz)/pow(Tau_val,2);            
   
   if (!instream.fail()) {
-   if (pT >= 2.0){ 
-    //vloz sem
+   if (pT >= 4.0){
     jets->emplace_back(f, R, Baryon_val, Charge_val, Strangeness_val, Tau_val, 
                        X_val, Y_val, Eta_val, p_tau, Px_val, Py_val, p_eta, Id_val, nevents);
     cout << "jet has been added\n";

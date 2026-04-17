@@ -1,6 +1,6 @@
 
 CXX           = g++
-CXXFLAGS      = -Wall -fPIC -O3 -D CARTESIAN
+CXXFLAGS      = -Wall -fPIC -O3
 LD            = g++
 LDFLAGS       = -O3
 
@@ -13,7 +13,7 @@ SRC        = cll.cpp eos.cpp eo3.cpp eo1.cpp eoChiral.cpp eoCMF.cpp eoCMFe.cpp e
              icGlauber.cpp icGubser.cpp icGlissando.cpp icTrento.cpp icTrento3d.cpp icSuperMC.cpp vtk.cpp icTest.cpp particle.cpp
 OBJS       = $(patsubst %.cpp,$(objdir)/%.o,$(SRC))
 
-TARGET	   = hlle_visc.cart
+TARGET	   = hlle_visc
 #------------------------------------------------------------------------------
 $(TARGET):       $(OBJS)
 		$(LD)  $(LDFLAGS) $^ -o $@ $(LIBS)
