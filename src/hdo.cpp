@@ -1150,7 +1150,7 @@ void Hydro::addParticles(deque<Particle>* particles) {
    }
 }
    
-void Hydro::addJets(vector<Particle>* jets) {
+void Hydro::addJets(std::vector<Particle>* jets) {
  //==== jets coming in ====
  double particle_t = jets->front().getT();
  #ifdef CARTESIAN

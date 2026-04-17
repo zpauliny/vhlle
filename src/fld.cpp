@@ -1233,9 +1233,8 @@ void Fluid::addParticle(Particle _particle) {
   }
 }
 
- void Fluid::addJet(Particle _particle) {
+void Fluid::addJet(Particle _particle) {
  double energyLoss0 = 1.0; 
- double dt = 1.0;
  Fluid* f;
  EoS* eos;
  double* dp;

@@ -30,7 +30,7 @@ Particle::Particle(){
 }
 
 Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, double _x,
-      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eentNo){
+      double _y, double _z, double _e, double _px, double _py, double _pz, int _pdg, int _eventNo){
     B = _B;
     Q = _Q;
     S = _S;
@@ -45,7 +45,7 @@ Particle::Particle(Fluid *f, double _R, int _B, int _Q, int _S, double _t, doubl
     py = _py;
     pz = _pz;
 
-    eventNo = _eentNo;
+    eventNo = _eventNo;
     R = _R;
     scale = 1.0;
 
@@ -138,41 +138,45 @@ double Particle::getWeight(int ix, int iy, int iz, Fluid *f,
 
 void Particle::energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos, double* dp){
    double p = sqrt(px*px + py*py + pz*pz);
-    double m = sqrt(max(0.0, e*e - px*px - py*py - pz*pz));
+   double tau = t;
+   double m2 = max(0.0, e*e - px*px - py*py - tau*tau * pz*pz);
 
-    Cell* myCell = f->getCell(ixc, iyc, izc);
-    double Q[7];
-    myCell->getQ(Q);
+   Cell* myCell = f->getCell(ixc, iyc, izc);
+   double Q[7];
+   myCell->getQ(Q);
+   // cell velocity: vx, vy, vz
+   double e_cell, p_cell, nb, nq, ns, vx, vy, vz;
+   transformPV(eos, Q, e_cell, p_cell, nb, nq, ns, vx, vy, vz);
 
-    double e_cell, p_cell, nb, nq, ns, vx, vy, vz;
-    transformPV(eos, Q, e_cell, p_cell, nb, nq, ns, vx, vy, vz);
-
-    double tau = t;
-    double p_eta = pz;
-    double p_tau = e; 
-    double gamma = 1;
-    double E_lrf = p_tau*gamma - px*vx - py*vy - p_eta*vz;
-    double p_lrf = sqrt(E_lrf*E_lrf - m*m);
-    double dp_tau = energyLoss0 * dt * (p_tau - E_lrf*gamma) / p_lrf;
-    double dp_x = energyLoss0 * dt * (p_eta - E_lrf*vx) / p_lrf;
-    double dp_y = energyLoss0 * dt * (p_eta - E_lrf*vy) / p_lrf;
-    double dp_z = energyLoss0 * dt * (p_eta - E_lrf*vz) / p_lrf;
-
-   if (dp) {
-       dp[0] = dp_x;
-       dp[1] = dp_y;
-       dp[2] = dp_z;
-    }
-    double phi = atan2(py, px);
-
-    double u = sqrt(p / e);
-    double dx = vx * dt;
-    double dy = vy * dt;
-    double dz = vz * dt;
-    x += dx; y += dy; z += dz;
+   double p_eta = pz;
+   double p_tau = e; 
+   double vtau = 1.0 / sqrt(1.0 - vx*vx - vy*vy - vz*vz);
+   double E_lrf = max( p_tau*vtau - px*vx - py*vy - tau*tau * p_eta*vz, 0.0);
+   double p_lrf = sqrt(max((E_lrf*E_lrf - m2 ), 1.0e-12));
    
-    double dr = sqrt(dx*dx + dy*dy + dz*dz);
-    e -= energyLoss0 * dr;
-    p = sqrt(max(0.0, e*e - m*m));
+   dp[0] = -energyLoss0 * dt * (p_tau - E_lrf*vtau) / p_lrf;
+   dp[1] = -energyLoss0 * dt * (px - E_lrf*vx) / p_lrf;
+   dp[2] = -energyLoss0 * dt * (py - E_lrf*vy) / p_lrf;
+   dp[3] = -energyLoss0 * dt * (p_eta - E_lrf*vz) / p_lrf;
+
+   double mass = sqrt(m2);
+   updateMomentum(dp, tau, mass);
+   updatePosition(dt);
 }
 
+void Particle::updateMomentum(double* dp, double tau, double mass){
+   e += dp[0];
+   px += dp[1];
+   py += dp[2];
+   pz += dp[3];
+
+   double spatial = px*px + py*py + tau*tau * pz*pz;
+   e = sqrt(mass * mass + spatial);
+}
+
+void Particle::updatePosition(double dt){
+   t += dt;
+   x += dt * px / e;
+   y += dt * py / e;
+   z += dt * pz / e;
+}

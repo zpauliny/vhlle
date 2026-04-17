@@ -52,5 +52,8 @@ class Particle {
      inline double getPt (void) {return std::sqrt(px*px + py*py);}
      inline double getM(void) { return sqrt(e*e - px*px - py*py - pz*pz); }
      inline int getEventNo(void) const { return eventNo; }
-     void energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos, double* dp); 
+     
+     void energyLoss(double energyLoss0, double dt, Fluid* f, EoS* eos, double* dp);
+     void updateMomentum(double* dp, double tau, double mass);
+     void updatePosition(double dt);
 };
