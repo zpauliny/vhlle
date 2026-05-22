@@ -645,12 +645,12 @@ int Fluid::outputSurface(double tau, bool extendFO) {
       exit(1);
      }
      //--------------
-     Efull += tau * (e + p) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
-                 (cosh(eta) - tanh(vz) * sinh(eta)) -
-             tau * p * cosh(eta);
+     Efull += tau * (e + p + c->getPi()) / (1. - vx * vx - vy * vy - tanh(vz) * tanh(vz)) *
+                 (cosh_int - tanh(vz) * sinh_int) -
+             tau * (p + c->getPi()) * cosh_int;
      if (trcoeff->isViscous())
       Efull +=
-         tau * c->getpi(0, 0) * cosh(eta) + tau * c->getpi(0, 3) * sinh(eta);
+         tau * c->getpi(0, 0) * cosh_int + tau * c->getpi(0, 3) * sinh_int;
      if (e > ecrit) {
       nCoreCells++;
       if (c->getViscCorrCutFlag() < 0.9) nCoreCutCells++;
@@ -995,7 +995,7 @@ int Fluid::outputSurface(double tau, bool extendFO) {
 //      << setw(10) << nelements << setw(10) << nsusp
 //      << setw(13) << (float)(nCoreCutCells) / (float)(nCoreCells) << endl;
  // alternative print-out:
- cout << setw(10) << tau << setw(13) << E << setw(13) << Nb1 << setw(13)
+ cout << setw(10) << tau << setw(13) << Efull << setw(13) << Nb1 << setw(13)
       << EtotSurf<< setw(13) << EtotSurfPos
       << setw(13) << EtotSurfNeg << setw(13) << nbTotSurf
       << setw(13) << nbTotSurfPos << endl; // trim output line << setw(13) << nbTotSurfNeg << endl;
