@@ -741,7 +741,7 @@ void Hydro::ISformal() {
   for (int iy = 0; iy < f->getNY(); iy++)
    for (int iz = 0; iz < f->getNZ(); iz++) {
     Cell *c = f->getCell(ix, iy, iz);
-    c->getPrimVarHCenter(eos, tauMinusHalf, e, p, nb, nq, ns, vx, vy,
+    c->getPrimVarPrev(eos, tauMinusDt, e, p, nb, nq, ns, vx, vy,
                          vz);  // instead of getPrimVar()
     if (e <= 0.) {             // empty cell?
      for (int i = 0; i < 4; i++)
@@ -768,6 +768,12 @@ void Hydro::ISformal() {
       flux[i] = tauMinusDt * (c->getpi(0, i) + c->getPi() * u[0] * u[i]);
      flux[0] += -tauMinusDt * c->getPi();
      c->addFlux(flux[0], flux[1], flux[2], flux[3], 0., 0., 0.);
+     c->getPrimVarHCenter(eos, tauMinusHalf, e, p, nb, nq, ns, vx, vy, vz);
+     gamma = 1.0 / sqrt(1.0 - vx * vx - vy * vy - vz * vz);
+     u[0] = gamma;
+     u[1] = u[0] * vx;
+     u[2] = u[0] * vy;
+     u[3] = u[0] * vz;
      // now calculating viscous terms in NS limit
      NSquant(ix, iy, iz, piNS, PiNS, dmu, dbeta, du);
      if (vorticityOn) {
