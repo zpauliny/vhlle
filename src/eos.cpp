@@ -2,8 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include "eos.h"
-#include "inc.h"
+
+#include <vhlle/eos.h>
+#include <vhlle/inc.h>
 
 using namespace std;
 

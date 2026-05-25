@@ -1,3 +1,4 @@
+#pragma once
 
 // initial state for hydrodynamic evolution from the table
 // in the format used in VISH2+1 hydro code

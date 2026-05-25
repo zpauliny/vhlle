@@ -1,8 +1,10 @@
-#include "cll.h"
+#pragma once
+#include <vhlle/cll.h>
 
-class EoS;
-class TransportCoeff;
 class Cornelius;
+class Eos;
+class TransportCoeff;
+class Particle;
 
 // this class contains the information and methods related to the hydro grid
 // 'z' direction actually denotes eta direction, as well as

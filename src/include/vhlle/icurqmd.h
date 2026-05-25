@@ -1,3 +1,5 @@
+#pragma once
+
 namespace icurqmd {
 
 void loadIC(char *filename);

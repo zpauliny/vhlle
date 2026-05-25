@@ -7,12 +7,12 @@
 #include <cstring>
 #include <numeric>
 
-#include "eos.h"
-#include "eoChiral.h"
-#include "fld.h"
-#include "icSuperMC.h"
-#include "rmn.h"
-#include "s95p.h"
+#include <vhlle/eoChiral.h>
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/icSuperMC.h>
+#include <vhlle/rmn.h>
+#include <vhlle/s95p.h>
 
 using namespace std;
 

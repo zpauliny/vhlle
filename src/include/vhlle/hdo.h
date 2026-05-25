@@ -1,7 +1,7 @@
+#pragma once
 #include <deque>
-#include "cll.h"
+#include <vhlle/cll.h>
 
-class Cell;
 class Fluid;
 class EoS;
 class TransportCoeff;

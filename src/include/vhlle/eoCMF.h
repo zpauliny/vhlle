@@ -1,4 +1,6 @@
-class EoS;
+#pragma once
+#include <vhlle/eos.h>
+
 class EoSaux;
 class EoSCMF : public EoS {
 public:

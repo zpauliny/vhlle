@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include "ickw.h"
-#include "eos.h"
-#include "fld.h"
-#include "inc.h"
+
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/ickw.h>
+#include <vhlle/inc.h>
 
 using namespace std;
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <iosfwd>
 
 class Fluid;

@@ -3,10 +3,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include "eos.h"
-#include "fld.h"
-#include "hdo.h"
-#include "vtk.h"
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/hdo.h>
+#include <vhlle/vtk.h>
 
 void VtkOutput::write_header(std::ofstream &file, const Hydro h,
                              const std::string &description) {

@@ -2,11 +2,11 @@
 #include <iostream>
 #include <iomanip>
 
-#include "fld.h"
-#include "eos.h"
-#include "ic.h"
-#include "inc.h"
-#include "s95p.h"
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/ic.h>
+#include <vhlle/inc.h>
+#include <vhlle/s95p.h>
 
 using namespace std;
 

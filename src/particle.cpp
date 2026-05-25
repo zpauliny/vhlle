@@ -3,8 +3,8 @@
 #include <cmath>
 #include <iomanip>
 
-#include "fld.h"
-#include "particle.h"
+#include <vhlle/fld.h>
+#include <vhlle/particle.h>
 
 using namespace std;
 

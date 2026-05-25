@@ -1,5 +1,5 @@
-
-class EoS;
+#pragma once
+#include <vhlle/eos.h>
 
 class EoS3f : public EoS {
 private:

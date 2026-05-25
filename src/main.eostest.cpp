@@ -8,12 +8,12 @@
 #include <TCanvas.h>
 #include <TGraph.h>
 
-#include "eos.h"
-#include "eo3.h"
-#include "eo1.h"
-#include "eoChiral.h"
-#include "eoHadron.h"
-#include "rmn.h"
+#include <vhlle/eoChiral.h>
+#include <vhlle/eoHadron.h>
+#include <vhlle/eos.h>
+#include <vhlle/eo1.h>
+#include <vhlle/eo3.h>
+#include <vhlle/rmn.h>
 
 using namespace std;
 

@@ -21,13 +21,14 @@
 #include <algorithm>
 #include <unistd.h>
 #include <memory>
-#include "hdo.h"
-#include "inc.h"
-#include "rmn.h"
-#include "fld.h"
-#include "eos.h"
-#include "trancoeff.h"
-#include "particle.h"
+
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/hdo.h>
+#include <vhlle/inc.h>
+#include <vhlle/particle.h>
+#include <vhlle/rmn.h>
+#include <vhlle/trancoeff.h>
 
 using namespace std;
 

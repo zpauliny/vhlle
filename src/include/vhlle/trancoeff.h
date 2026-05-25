@@ -1,3 +1,5 @@
+#pragma once
+
 class EoS;
 
 // this class contains the information about the transport coefficients

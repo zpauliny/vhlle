@@ -1,6 +1,6 @@
 
 CXX           = g++
-CXXFLAGS      = -Wall -fPIC -O3
+CXXFLAGS      = -Wall -fPIC -O3 -Isrc/include
 LD            = g++
 LDFLAGS       = -O3
 
