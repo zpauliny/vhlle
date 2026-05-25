@@ -13,8 +13,8 @@
 #include <fstream>
 //#include <TF1.h>
 
-#include "eos.h"
-#include "eo3.h"
+#include <vhlle/eos.h>
+#include <vhlle/eo3.h>
 
 using namespace std;
 

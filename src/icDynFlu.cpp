@@ -8,14 +8,13 @@
 #include <deque>
 #include <algorithm>  // For std::sort
 
-#include "eos.h"
-#include "eoChiral.h"
-#include "rmn.h"
-#include "fld.h"
-#include "icPartSMASH.h"
-#include "icDynFlu.h"
-#include "colour.h"
-#include "particle.h"
+#include <vhlle/colour.h>
+#include <vhlle/eoChiral.h>
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/icDynFlu.h>
+#include <vhlle/particle.h>
+#include <vhlle/rmn.h>
 
 using namespace std;
 

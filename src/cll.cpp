@@ -2,9 +2,11 @@
 #include <fstream>
 #include <cmath>
 #include <iomanip>
-#include "rmn.h"
-#include "cll.h"
-#include "particle.h"
+
+#include <vhlle/cll.h>
+#include <vhlle/eos.h>
+#include <vhlle/particle.h>
+#include <vhlle/rmn.h>
 
 using namespace std;
 

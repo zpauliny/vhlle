@@ -2,11 +2,11 @@
 #include <iomanip>
 #include <ctime>
 #include <cstdlib>
-
 #include <iostream>
 #include <fstream>
-#include "eos.h"
-#include "eoHadron.h"
+
+#include <vhlle/eoHadron.h>
+#include <vhlle/eos.h>
 
 using namespace std;
 

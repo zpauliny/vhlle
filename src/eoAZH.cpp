@@ -5,8 +5,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "eos.h"
-#include "eoAZH.h"
+#include <vhlle/eoAZH.h>
+#include <vhlle/eos.h>
 
 using namespace std;
 

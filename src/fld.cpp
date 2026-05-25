@@ -24,15 +24,16 @@
 #include <cstdio>
 #include <filesystem>
 #include <stdexcept>
-#include "inc.h"
-#include "rmn.h"
-#include "fld.h"
-#include "cll.h"
-#include "eos.h"
-#include "trancoeff.h"
-#include "cornelius.h"
-#include "colour.h"
-#include "particle.h"
+
+#include <vhlle/cll.h>
+#include <vhlle/colour.h>
+#include <vhlle/cornelius.h>
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/inc.h>
+#include <vhlle/particle.h>
+#include <vhlle/rmn.h>
+#include <vhlle/trancoeff.h>
 
 #define OUTPI
 

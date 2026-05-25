@@ -1,12 +1,14 @@
-class EoS;
-class EoSAZHaux;
-class EoSAZH : public EoS {
+#pragma once
+#include <vhlle/eos.h>
+
+class EoSaux;
+class EoSChiral : public EoS {
 private:
- EoSAZHaux *p1, *p2, *T1, *T2, *mu1, *mu2;
+ EoSaux *eossmall, *eosbig;
 
 public:
- EoSAZH(void);
- ~EoSAZH(void);
+ EoSChiral(void);
+ ~EoSChiral(void);
 
  virtual void eos(double e, double nb, double nq, double ns, double &_T,
                   double &_mub, double &_muq, double &_mus, double &_p);

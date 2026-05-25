@@ -1,4 +1,6 @@
-class EoS;
+#pragma once
+#include <vhlle/eos.h>
+
 class EoSSmash : public EoS {
   // Bounds (upper and lower) of energy density, baryon density and charge density
   double emax, emin, nbmax, nbmin, nqmax, nqmin;

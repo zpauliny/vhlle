@@ -4,10 +4,10 @@
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_monte_miser.h>
 
-#include "fld.h"
-#include "eos.h"
-#include "icGlauber.h"
-#include "inc.h"
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/icGlauber.h>
+#include <vhlle/inc.h>
 
 using namespace std;
 

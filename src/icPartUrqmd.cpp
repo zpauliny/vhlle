@@ -5,11 +5,11 @@
 #include <iomanip>
 #include <cfloat>
 
-#include "eos.h"
-#include "eoChiral.h"
-#include "rmn.h"
-#include "fld.h"
-#include "icPartUrqmd.h"
+#include <vhlle/eoChiral.h>
+#include <vhlle/eos.h>
+#include <vhlle/fld.h>
+#include <vhlle/icPartUrqmd.h>
+#include <vhlle/rmn.h>
 
 using namespace std;
 

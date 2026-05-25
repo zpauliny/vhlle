@@ -1,4 +1,5 @@
-class EoS;
+#pragma once
+#include <vhlle/eos.h>
 
 class EoSHadron : public EoS {
  double e0, n0, logemin, logemax, lognmax;

@@ -1,8 +1,9 @@
 #include <iostream>
 #include <iomanip>
-#include "eos.h"
-#include "trancoeff.h"
-#include "inc.h"
+
+#include <vhlle/eos.h>
+#include <vhlle/inc.h>
+#include <vhlle/trancoeff.h>
 
 void TransportCoeff::printZetaT()
 {

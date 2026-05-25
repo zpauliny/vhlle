@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "eos.h"
-#include "eoSmash.h"
+#include <vhlle/eos.h>
+#include <vhlle/eoSmash.h>
 
 using namespace std;
 

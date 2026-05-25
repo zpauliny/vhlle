@@ -1,3 +1,5 @@
+#pragma once
+
 class Fluid;
 
 class Particle {

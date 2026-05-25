@@ -1,5 +1,7 @@
-#include "eos.h"
-#include "inc.h"
+#pragma once
+#include <vhlle/inc.h>
+
+class EoS;
 
 // transformation from conserved -> primitive quantities
 // input: EoS instance and conserved quantities Q

@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <execinfo.h>
 #include <signal.h>
-#include "rmn.h"
+
+#include <vhlle/eos.h>
+#include <vhlle/rmn.h>
 
 using namespace std;
 

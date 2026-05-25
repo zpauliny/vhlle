@@ -22,7 +22,8 @@
 #include <cmath>
 #include <stdexcept>
 #include <vector>
-#include "inc.h"
+
+#include <vhlle/inc.h>
 class EoS;
 class Particle;
 

@@ -1,14 +1,14 @@
-class EoS;
-class EoSCMFeaux;
-class EoSCMFe : public EoS {
+#pragma once
+#include <vhlle/eos.h>
+
+class EoSAZHaux;
+class EoSAZH : public EoS {
 private:
- EoSCMFeaux *eossmall, *eosbig;
+ EoSAZHaux *p1, *p2, *T1, *T2, *mu1, *mu2;
 
 public:
- EoSCMFe(void);
- ~EoSCMFe(void);
- const double EPS_0 = 146.51751415742*0.87326281;
-  const double N_0 = 0.15891*0.87272727;
+ EoSAZH(void);
+ ~EoSAZH(void);
 
  virtual void eos(double e, double nb, double nq, double ns, double &_T,
                   double &_mub, double &_muq, double &_mus, double &_p);

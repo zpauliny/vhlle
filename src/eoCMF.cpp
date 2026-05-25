@@ -6,8 +6,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "eos.h"
-#include "eoCMF.h"
+#include <vhlle/eoCMF.h>
+#include <vhlle/eos.h>
 
 /*
 Equation of state based on 
