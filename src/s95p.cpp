@@ -3,8 +3,6 @@
 #include <fstream>
 #include <cstdlib>
 
-extern int glauberVariable;
-
 namespace s95p {
 using namespace std;
 
@@ -38,7 +36,7 @@ double s95p_e(double s) {
  return e;
 }
 
-void loadSongIC(const char* filename, double factor) {
+void loadSongIC(const char* filename, double factor, int glauberVariable) {
  ifstream fin(filename);
  if (!fin) {
   cout << "cannot open " << filename << endl;

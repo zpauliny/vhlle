@@ -5,7 +5,7 @@ set(LIB_SRC
     s95p.cpp icurqmd.cpp ic.cpp ickw.cpp icPartUrqmd.cpp icPartSMASH.cpp
     icDynFlu.cpp rmn.cpp cornelius.cpp icGlauber.cpp icGubser.cpp
     icGlissando.cpp icTrento.cpp icTrento3d.cpp icSuperMC.cpp vtk.cpp
-    icTest.cpp particle.cpp
+    icTest.cpp particle.cpp simulation.cpp
 )
 
 # Library and namespaced alias

@@ -11,7 +11,7 @@ double s95p_e(double s);
 
 // load the table for the initial entropy density profile
 // factor: factor to scale the entropy density
-void loadSongIC(const char* filename, double factor);
+void loadSongIC(const char* filename, double factor, int glauberVariable);
 // get the energy density at a given point in the transverse plane
 double getSongEps(double x, double y);
 }

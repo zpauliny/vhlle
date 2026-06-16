@@ -3,8 +3,6 @@
 #include <fstream>
 #include <cstdlib>
 
-extern int glauberVariable;
-
 namespace icurqmd {
 using namespace std;
 

@@ -10,8 +10,8 @@
 
 using namespace std;
 
-IC::IC(const char *icInputFile, double s0ScaleFactor) {
- s95p::loadSongIC(icInputFile, s0ScaleFactor);
+IC::IC(const char *icInputFile, double s0ScaleFactor, int glauberVariable) {
+ s95p::loadSongIC(icInputFile, s0ScaleFactor, glauberVariable);
 }
 
 IC::~IC(void) {}

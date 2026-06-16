@@ -49,6 +49,7 @@
 #include <vhlle/icTrento3d.h>
 #include <vhlle/icSuperMC.h>
 #include <vhlle/particle.h>
+#include <vhlle/simulation.h>
 #include <vhlle/trancoeff.h>
 #include <vhlle/vtk.h>
 
@@ -353,7 +354,7 @@ int main(int argc, char **argv) {
   ic->setIC(f, eos);
   delete ic;
  } else if (icModel == 2) { // Glauber_table + parametrized rapidity dependence
-  IC *ic = new IC(isInputFile.c_str(), s0ScaleFactor);
+  IC *ic = new IC(isInputFile.c_str(), s0ScaleFactor, glauberVariable);
   ic->setIC(f, eos, tau0);
   delete ic;
  } else if (icModel == 3) { // UrQMD IC
