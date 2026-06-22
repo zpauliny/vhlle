@@ -37,3 +37,17 @@ install(TARGETS vhlle hlle_visc
 )
 
 install(DIRECTORY include/ DESTINATION include)
+
+# Parameter tables necessary for runtime are included 
+if(VHLLE_PARAMS_DIR)
+    add_custom_command(TARGET hlle_visc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${VHLLE_PARAMS_DIR}/eos $<TARGET_FILE_DIR:hlle_visc>/eos
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${VHLLE_PARAMS_DIR}/ic $<TARGET_FILE_DIR:hlle_visc>/ic
+        COMMENT "Creating symlinks to parameter tables in ${VHLLE_PARAMS_DIR}"
+    )
+
+    install(DIRECTORY ${VHLLE_PARAMS_DIR}/eos DESTINATION share/vhlle)
+    install(DIRECTORY ${VHLLE_PARAMS_DIR}/ic  DESTINATION share/vhlle)
+endif()

@@ -7,6 +7,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(GSL REQUIRED)
 
+# User provides path to vhlle_params repository
+set(VHLLE_PARAMS_DIR "" CACHE PATH "Path to vhlle_params repository")
+
+if(VHLLE_PARAMS_DIR)
+    message(STATUS "vhlle_params found at ${VHLLE_PARAMS_DIR} " 
+                   "- parameter tables will be symlinked")
+else()
+    message(WARNING "VHLLE_PARAMS_DIR not set. Parameter tables (eos/, ic/) "
+                    "will not be symlinked.\n"
+                    "Set it with -DVHLLE_PARAMS_DIR=/path/to/vhlle_params")
+endif()
+
 # Subdirectories
 add_subdirectory(src)
 
