@@ -25,6 +25,9 @@ target_link_libraries(vhlle PUBLIC GSL::gsl GSL::gslcblas)
 
 add_executable(hlle_visc main.cpp)
 target_link_libraries(hlle_visc PRIVATE vhlle::vhlle)
+set_target_properties(hlle_visc PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
 
 # Install with standard defaults
 install(TARGETS vhlle hlle_visc
