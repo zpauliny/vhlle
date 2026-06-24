@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include <vhlle/colour.h>
 #include <vhlle/simulation.h>
 
 int main(int argc, char** argv) {
@@ -27,10 +28,10 @@ int main(int argc, char** argv) {
         while (simulation.step());
         simulation.finalize();
     } catch (const std::exception& e) {
-        std::cerr << "FATAL: " << e.what() << "\n";
+        std::cerr << red << "FATAL: " << e.what() << "\n" << reset;
         return 1;
     } catch (...) {
-        std::cerr << "FATAL: unknown exception\n";
+        std::cerr << red <<  "FATAL: unknown exception\n" << reset;
         return 1;
     }
     return 0;

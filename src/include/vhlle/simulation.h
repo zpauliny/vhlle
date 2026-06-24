@@ -62,4 +62,5 @@ private:
     int    nelements {1};
     time_t tstart   {0};
     time_t tinit    {0};
+    double timeInitFO {0.0};
 };

@@ -36,14 +36,12 @@
 #include <vhlle/trancoeff.h>
 #include <vhlle/vtk.h>
 
-using namespace std;
-
 // ============================================================
 // constructor / destructor
 // ============================================================
 
 Simulation::Simulation(int argc, char** argv) {
-    particles = new deque<Particle>();
+    particles = new std::deque<Particle>();
     time(&tstart);
     readCommandLine(argc, argv);
 }
@@ -76,8 +74,8 @@ void Simulation::setup() {
     else if (eosType == 4)
         eos = new EoSCMFe();
     else {
-        cout << "eosType != 0,1,2,3,4\n";
-        return;
+        std::cerr << red << "FATAL: eosType != 0,1,2,3,4\n" << reset;
+        exit(1);
     }
 
     // hadronic EoS for hypersurface creation
@@ -86,8 +84,8 @@ void Simulation::setup() {
     else if (eosTypeHadron == 1)
         eosH = new EoSSmash((char*)"eos/hadgas_eos_SMASH.dat", 101, 51, 51);
     else {
-        cout << "Unknown hadronic EoS type.\n";
-        return;
+        std::cerr << red << "FATAL: Unknown hadronic EoS type.\n" << reset;
+        exit(1);
     }
 
     // transport coefficients
@@ -99,9 +97,7 @@ void Simulation::setup() {
     // fluid grid
     f = new Fluid(eos, eosH, trcoeff, nx, ny, nz, xmin, xmax, ymin, ymax,
                   etamin, etamax, dtau, eCrit, cartesian);
-    cout << "fluid allocation done\n";
-
-    double timeInitFO = 0.0;
+    std::cout << "fluid allocation done\n";
 
     // initial conditions
     if (icModel == 1) {
@@ -143,8 +139,8 @@ void Simulation::setup() {
         delete ic;
     } else if (icModel == 10) {
         if (!cartesian) {
-            cerr << red << "IC model = 10: Dynamical Fluidization\n"
-                 << "Cartesian coordinate system must be set. Exiting.\n" << reset;
+            std::cerr << red << "FATAL: IC model = 10: Dynamical Fluidization\n"
+                 << "Cartesian coordinate system must be set.\n" << reset;
             exit(1);
         }
         IcDynFlu *ic = new IcDynFlu(f, isInputFile.c_str(), gaussian_sigma, particles);
@@ -155,12 +151,14 @@ void Simulation::setup() {
         ic->setIC(f, eos, 1);
         delete ic;
     } else {
-        cout << "icModel = " << icModel << " not implemented\n";
+        std::cerr << red << "FATAL: icModel = " << icModel << " not implemented.\n"
+                  << reset;
+        exit(1);
     }
-    cout << "IC done\n";
+    std::cout << "IC done\n";
 
     time(&tinit);
-    cout << "Init time = " << difftime(tinit, tstart) << " [sec]\n";
+    std::cout << "Init time = " << difftime(tinit, tstart) << " [sec]\n";
 
     // hydro init
     if (cartesian) {
@@ -203,7 +201,7 @@ bool Simulation::step() {
         for (int j = 0; j < nSubSteps; j++)
             h->performStep();
         h->setDtau(h->getDtau() * nSubSteps);
-        cout << "timestep reduced by " << nSubSteps << "\n";
+        std::cout << "timestep reduced by " << nSubSteps << "\n";
     } else {
         h->performStep();
     }
@@ -212,10 +210,10 @@ bool Simulation::step() {
 
     if (icModel == 10) {
         if (particles->size() > 0) h->addParticles(particles);
-        if (ctime > 0.0 && nelements > 0)
+        if ((ctime > timeInitFO) && (nelements > 0))
             nelements = f->outputSurface(ctime, freezeoutExtend);
     } else {
-        nelements = f->outputSurface(h->getTau(), freezeoutExtend);
+        nelements = f->outputSurface(ctime, freezeoutExtend);
     }
 
     if (!freezeoutOnly)
@@ -228,7 +226,7 @@ bool Simulation::step() {
     }
 
     if (ctime >= tauResize && !resized) {
-        cout << "grid resize\n";
+        std::cout << "grid resize\n";
         expandGrid2x();
         resized = true;
     }
@@ -243,7 +241,7 @@ bool Simulation::step() {
 void Simulation::finalize() {
     time_t tend = 0;
     time(&tend);
-    cout << "Execution time = " << difftime(tend, tstart) << " [sec]\n";
+    std::cout << "Execution time = " << difftime(tend, tstart) << " [sec]\n";
     f->renameOutput(outputDir.c_str());
 }
 
@@ -254,7 +252,7 @@ void Simulation::finalize() {
 void Simulation::expandGrid2x() {
     if (f->getX(0) + f->getX(f->getNX()-1) > 0.001
      || f->getY(0) + f->getY(f->getNY()-1) > 0.001) {
-        cout << "grid expansion works only with symmetric min/max ranges\n";
+        std::cout << "grid expansion works only with symmetric min/max ranges\n";
         return;
     }
     Fluid* fnew = new Fluid(eos, eosH, trcoeff,
@@ -280,27 +278,27 @@ void Simulation::expandGrid2x() {
 
 void Simulation::checkGridDimension(int n, char axis) {
     if (n < 5) {
-        cerr << red << "FATAL: grid too small in " << axis << " direction\n" << reset;
+        std::cerr << red << "FATAL: grid too small in " << axis << " direction\n" << reset;
         exit(1);
     }
 }
 
-void Simulation::checkGridBorders(double min, double max, const string& axis) {
+void Simulation::checkGridBorders(double min, double max, const std::string& axis) {
     if (min >= max) {
-        cerr << red << "FATAL: " << axis << "min >= " << axis << "max\n" << reset;
+        std::cerr << red << "FATAL: " << axis << "min >= " << axis << "max\n" << reset;
         exit(1);
     }
 }
 
-bool Simulation::parse_bool(const string& value) {
+bool Simulation::parse_bool(const std::string& value) {
     if (value == "1" || value == "true")  return true;
     if (value == "0" || value == "false") return false;
-    throw runtime_error("Invalid boolean in config: " + value);
+    throw std::runtime_error("Invalid boolean in config: " + value);
 }
 
 void Simulation::readCommandLine(int argc, char** argv) {
     if (argc == 1) {
-        cout << "no CL params - exiting.\n";
+        std::cerr << "FATAL: no CL params.\n" << reset;
         exit(1);
     }
     for (int i = 1; i < argc - 1; i++) {
@@ -309,82 +307,83 @@ void Simulation::readCommandLine(int argc, char** argv) {
         if (strcmp(argv[i], "-ISinput")   == 0) isInputFile = argv[i+1];
         if (strcmp(argv[i], "-outputDir") == 0) outputDir   = argv[i+1];
     }
-    cout << "collision system: " << collSystem << "\n"
-         << "ini.state input:  " << isInputFile << "\n"
-         << "output directory: " << outputDir << "\n";
+    std::cout << "collision system: " << collSystem << "\n"
+              << "ini.state input:  " << isInputFile << "\n"
+              << "output directory: " << outputDir << "\n";
 }
 
 void Simulation::readParameters(const char* parFile) {
-    ifstream fin(parFile);
+    std::ifstream fin(parFile);
     if (!fin.is_open()) {
-        cout << "cannot open parameters file " << parFile << "\n";
+        std::cerr << red << "FATAL: cannot open parameters file " << parFile << "\n"
+                  << reset;
         exit(1);
     }
-    cout << "vhlle: reading parameters from " << parFile << "\n";
+    std::cout << "vhlle: reading parameters from " << parFile << "\n";
 
-    map<string, function<void(const string&)>> handlers = {
-        {"eosType",          [this](const string& v) { eosType          = stoi(v); }},
-        {"eosTypeHadron",    [this](const string& v) { eosTypeHadron    = stoi(v); }},
-        {"nx",               [this](const string& v) { nx               = stoi(v); }},
-        {"ny",               [this](const string& v) { ny               = stoi(v); }},
-        {"nz",               [this](const string& v) { nz               = stoi(v); }},
-        {"icModel",          [this](const string& v) { icModel          = stoi(v); }},
-        {"glauberVar",       [this](const string& v) { glauberVariable  = stoi(v); }},
-        {"xmin",             [this](const string& v) { xmin             = stod(v); }},
-        {"xmax",             [this](const string& v) { xmax             = stod(v); }},
-        {"ymin",             [this](const string& v) { ymin             = stod(v); }},
-        {"ymax",             [this](const string& v) { ymax             = stod(v); }},
-        {"etamin",           [this](const string& v) { etamin           = stod(v); }},
-        {"etamax",           [this](const string& v) { etamax           = stod(v); }},
-        {"tau0",             [this](const string& v) { tau0             = stod(v); }},
-        {"tauMax",           [this](const string& v) { tauMax           = stod(v); }},
-        {"tauGridResize",    [this](const string& v) { tauResize        = stod(v); }},
-        {"dtau",             [this](const string& v) { dtau             = stod(v); }},
-        {"e_crit",           [this](const string& v) { eCrit            = stod(v); }},
-        {"etaS",             [this](const string& v) { etaS             = stod(v); }},
-        {"zetaS",            [this](const string& v) { zetaS            = stod(v); }},
-        {"etaSparam",        [this](const string& v) { etaSparam        = stoi(v); }},
-        {"zetaSparam",       [this](const string& v) { zetaSparam       = stoi(v); }},
-        {"zetaSScaleBeta",   [this](const string& v) { zetaSScaleBeta   = stod(v); }},
-        {"zetaSPeakEpsilon", [this](const string& v) { zetaSPeakEpsilon = stod(v); }},
-        {"zetaSSigmaMinus",  [this](const string& v) { zetaSSigmaMinus  = stod(v); }},
-        {"zetaSSigmaPlus",   [this](const string& v) { zetaSSigmaPlus   = stod(v); }},
-        {"epsilon0",         [this](const string& v) { epsilon0         = stod(v); }},
-        {"Rg",               [this](const string& v) { Rgt              = stod(v); }},
-        {"Rgz",              [this](const string& v) { Rgz              = stod(v); }},
-        {"impactPar",        [this](const string& v) { impactPar        = stod(v); }},
-        {"s0ScaleFactor",    [this](const string& v) { s0ScaleFactor    = stod(v); }},
-        {"VTK_output_values",[this](const string& v) { vtk_values       = v;       }},
-        {"aRho",             [this](const string& v) { aRho             = stod(v); }},
-        {"ah",               [this](const string& v) { ah               = stod(v); }},
-        {"al",               [this](const string& v) { al               = stod(v); }},
-        {"T0",               [this](const string& v) { T0               = stod(v); }},
-        {"etaSEpsilonMin",   [this](const string& v) { etaSEpsilonMin   = stod(v); }},
-        {"etaSMin",          [this](const string& v) { etaSMin          = stod(v); }},
-        {"etaSShiftMuB",     [this](const string& v) { etaSShiftMuB     = stod(v); }},
-        {"etaSScaleMuB",     [this](const string& v) { etaSScaleMuB     = stod(v); }},
-        {"freezeoutOnly",    [this](const string& v) { freezeoutOnly    = parse_bool(v); }},
-        {"freezeoutExtend",  [this](const string& v) { freezeoutExtend  = parse_bool(v); }},
-        {"vorticity",        [this](const string& v) { vorticityOn      = stoi(v); }},
-        {"smoothingType",    [this](const string& v) { smoothingType    = stoi(v); }},
-        {"Gaussian_Sigma",   [this](const string& v) { gaussian_sigma   = stod(v); }},
-        {"minParticlesFO",   [this](const string& v) { minParticlesFO   = stoi(v); }},
-        {"cartesian",        [this](const string& v) { cartesian        = parse_bool(v); }},
+    std::map<std::string, std::function<void(const std::string&)>> handlers = {
+        {"eosType",          [this](const std::string& v) { eosType          = stoi(v); }},
+        {"eosTypeHadron",    [this](const std::string& v) { eosTypeHadron    = stoi(v); }},
+        {"nx",               [this](const std::string& v) { nx               = stoi(v); }},
+        {"ny",               [this](const std::string& v) { ny               = stoi(v); }},
+        {"nz",               [this](const std::string& v) { nz               = stoi(v); }},
+        {"icModel",          [this](const std::string& v) { icModel          = stoi(v); }},
+        {"glauberVar",       [this](const std::string& v) { glauberVariable  = stoi(v); }},
+        {"xmin",             [this](const std::string& v) { xmin             = stod(v); }},
+        {"xmax",             [this](const std::string& v) { xmax             = stod(v); }},
+        {"ymin",             [this](const std::string& v) { ymin             = stod(v); }},
+        {"ymax",             [this](const std::string& v) { ymax             = stod(v); }},
+        {"etamin",           [this](const std::string& v) { etamin           = stod(v); }},
+        {"etamax",           [this](const std::string& v) { etamax           = stod(v); }},
+        {"tau0",             [this](const std::string& v) { tau0             = stod(v); }},
+        {"tauMax",           [this](const std::string& v) { tauMax           = stod(v); }},
+        {"tauGridResize",    [this](const std::string& v) { tauResize        = stod(v); }},
+        {"dtau",             [this](const std::string& v) { dtau             = stod(v); }},
+        {"e_crit",           [this](const std::string& v) { eCrit            = stod(v); }},
+        {"etaS",             [this](const std::string& v) { etaS             = stod(v); }},
+        {"zetaS",            [this](const std::string& v) { zetaS            = stod(v); }},
+        {"etaSparam",        [this](const std::string& v) { etaSparam        = stoi(v); }},
+        {"zetaSparam",       [this](const std::string& v) { zetaSparam       = stoi(v); }},
+        {"zetaSScaleBeta",   [this](const std::string& v) { zetaSScaleBeta   = stod(v); }},
+        {"zetaSPeakEpsilon", [this](const std::string& v) { zetaSPeakEpsilon = stod(v); }},
+        {"zetaSSigmaMinus",  [this](const std::string& v) { zetaSSigmaMinus  = stod(v); }},
+        {"zetaSSigmaPlus",   [this](const std::string& v) { zetaSSigmaPlus   = stod(v); }},
+        {"epsilon0",         [this](const std::string& v) { epsilon0         = stod(v); }},
+        {"Rg",               [this](const std::string& v) { Rgt              = stod(v); }},
+        {"Rgz",              [this](const std::string& v) { Rgz              = stod(v); }},
+        {"impactPar",        [this](const std::string& v) { impactPar        = stod(v); }},
+        {"s0ScaleFactor",    [this](const std::string& v) { s0ScaleFactor    = stod(v); }},
+        {"VTK_output_values",[this](const std::string& v) { vtk_values       = v;       }},
+        {"aRho",             [this](const std::string& v) { aRho             = stod(v); }},
+        {"ah",               [this](const std::string& v) { ah               = stod(v); }},
+        {"al",               [this](const std::string& v) { al               = stod(v); }},
+        {"T0",               [this](const std::string& v) { T0               = stod(v); }},
+        {"etaSEpsilonMin",   [this](const std::string& v) { etaSEpsilonMin   = stod(v); }},
+        {"etaSMin",          [this](const std::string& v) { etaSMin          = stod(v); }},
+        {"etaSShiftMuB",     [this](const std::string& v) { etaSShiftMuB     = stod(v); }},
+        {"etaSScaleMuB",     [this](const std::string& v) { etaSScaleMuB     = stod(v); }},
+        {"freezeoutOnly",    [this](const std::string& v) { freezeoutOnly    = parse_bool(v); }},
+        {"freezeoutExtend",  [this](const std::string& v) { freezeoutExtend  = parse_bool(v); }},
+        {"vorticity",        [this](const std::string& v) { vorticityOn      = stoi(v); }},
+        {"smoothingType",    [this](const std::string& v) { smoothingType    = stoi(v); }},
+        {"Gaussian_Sigma",   [this](const std::string& v) { gaussian_sigma   = stod(v); }},
+        {"minParticlesFO",   [this](const std::string& v) { minParticlesFO   = stoi(v); }},
+        {"cartesian",        [this](const std::string& v) { cartesian        = parse_bool(v); }},
     };
 
     char parName[255], parValue[255];
     while (fin.good()) {
-        string line;
+        std::string line;
         getline(fin, line);
-        istringstream sline(line);
+        std::istringstream sline(line);
         sline >> parName >> parValue;
         auto handler = handlers.find(parName);
         if (handler != handlers.end())
             handler->second(parValue);
         else if (parName[0] == '!')
-            cout << "CCC " << sline.str() << "\n";
+            std::cout << "CCC " << sline.str() << "\n";
         else
-            cout << "UUU " << sline.str() << "\n";
+            std::cout << "UUU " << sline.str() << "\n";
     }
 
     checkGridBorders(xmin, xmax, "x");
@@ -396,7 +395,7 @@ void Simulation::readParameters(const char* parFile) {
 }
 
 void Simulation::printParameters() {
-    cout << "====== parameters ======\n"
+    std::cout << "====== parameters ======\n"
          << "outputDir = "        << outputDir      << "\n"
          << "freezeoutOnly = "    << freezeoutOnly  << "\n"
          << "freezeoutExtend = "  << freezeoutExtend<< "\n"
