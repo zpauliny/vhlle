@@ -14,7 +14,7 @@ if(VHLLE_PARAMS_DIR)
     message(STATUS "vhlle_params found at ${VHLLE_PARAMS_DIR} " 
                    "- parameter tables will be symlinked")
 else()
-    message(WARNING "VHLLE_PARAMS_DIR not set. Parameter tables (eos/, ic/) "
+    message(WARNING "VHLLE_PARAMS_DIR not set. Parameter tables (eos/, ic/, params/) "
                     "will not be symlinked.\n"
                     "Set it with -DVHLLE_PARAMS_DIR=/path/to/vhlle_params")
 endif()

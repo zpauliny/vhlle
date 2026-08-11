@@ -45,6 +45,8 @@ if(VHLLE_PARAMS_DIR)
             ${VHLLE_PARAMS_DIR}/eos $<TARGET_FILE_DIR:hlle_visc>/eos
         COMMAND ${CMAKE_COMMAND} -E create_symlink
             ${VHLLE_PARAMS_DIR}/ic $<TARGET_FILE_DIR:hlle_visc>/ic
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${VHLLE_PARAMS_DIR}/params $<TARGET_FILE_DIR:hlle_visc>/params
         COMMENT "Creating symlinks to parameter tables in ${VHLLE_PARAMS_DIR}"
     )
 
